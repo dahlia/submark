@@ -3,6 +3,8 @@ machine:
   - docker
 dependencies:
   override:
+  - sudo apt-get update
+  - sudo apt-get install upx-ucl
   - docker info
   - |
     if [[ -e ~/docker/image.tar ]]; then
@@ -13,6 +15,19 @@ dependencies:
   - docker save submark > ~/docker/image.tar
   cache_directories:
   - ~/docker
+compile:
+  override:
+  - mkdir -p /tmp/submark-build
+  - |
+    pushd /tmp/submark-build
+    docker run submark cat /root/.local/bin/submark > submark
+    chmod +x submark
+    ldd submark
+    upx-ucl -9 submark
+    os="$(docker run submark uname -s | tr '[A-Z]' '[a-z]')"
+    arch="$(docker run submark uname -m)"
+    cp submark "$CIRCLE_ARTIFACTS/submark-$os-$arch"
+    popd
 test:
   override:
   - docker run submark stack test
