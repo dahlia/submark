@@ -13,13 +13,20 @@ dependencies:
   - docker build --rm=false -t submark .
   - mkdir -p ~/docker
   - docker save submark > ~/docker/image.tar
+  - mkdir -p ~/bin/
+  - |
+    if [[ "$CIRCLE_TAG" != "" ]]; then
+      pushd /tmp
+      curl -OL https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2
+      tar xvfj linux-amd64-github-release.tar.bz2
+      mv bin/linux/amd64/github-release ~/bin/
+    fi
   cache_directories:
   - ~/docker
 compile:
   override:
-  - mkdir -p /tmp/submark-build
   - |
-    pushd /tmp/submark-build
+    pushd ~/bin/
     docker run submark cat /root/.local/bin/submark > submark
     chmod +x submark
     ldd submark
@@ -31,3 +38,48 @@ compile:
 test:
   override:
   - docker run submark stack test
+  - |
+    v="$(docker run submark stack query locals submark version)"
+    [[ "$CIRCLE_TAG" = "" || "$v" = "'$CIRCLE_TAG'" ]]
+  - '[[ "$CIRCLE_TAG" = "" ]] || ! grep -i "to be released" CHANGELOG.md'
+deployment:
+  release:
+    tag: /^[0-9]+\.[0-9]+\.[0-9]+$/
+    commands:
+    # GitHub releases
+    - |
+      release_note="$(~/bin/submark --h2 'Version $CIRCLE_TAG' -O CHANGELOG.md)"
+      echo "$release_note"
+      ~/bin/github-release release \
+        --user "$CIRCLE_PROJECT_USERNAME" \
+        --repo "$CIRCLE_PROJECT_REPONAME" \
+        --tag "$CIRCLE_TAG" \
+        --name "$CIRCLE_PROJECT_REPONAME $CIRCLE_TAG" \
+        --description "$release_note"
+    - |
+      ~/bin/github-release upload \
+        --user "$CIRCLE_PROJECT_USERNAME" \
+        --repo "$CIRCLE_PROJECT_REPONAME" \
+        --tag "$CIRCLE_TAG" \
+        --name "$(basename $CIRCLE_ARTIFACTS/submark-*)" \
+        --file $CIRCLE_ARTIFACTS/submark-*
+    # Hackage
+    - |
+      echo 'import json, os'                                     > /tmp/cred.py
+      echo 'print(json.dumps({'                                 >> /tmp/cred.py
+      echo '  "username": os.environ["HACKAGE_USERNAME"],'      >> /tmp/cred.py
+      echo '  "password": os.environ["HACKAGE_PASSWORD"],'      >> /tmp/cred.py
+      echo '}))'                                                >> /tmp/cred.py
+    - [[ -f /tmp/cred.py ]]
+    - |
+      echo 'mkdir -p ~/.stack/upload'                               > /tmp/s.sh
+      echo 'echo "$cred" > ~/.stack/upload/credentials.json'       >> /tmp/s.sh
+      echo '[[ -f ~/.stack/upload/credentials.json ]]'             >> /tmp/s.sh
+      echo "sed -i 's/^ *- -Werror$//g' package.yaml"              >> /tmp/s.sh
+      #    ^ Hackage disallows -Werror
+      echo 'stack sdist --ignore-check'                            >> /tmp/s.sh
+      echo 'stack upload --ignore-check --no-signature . || true'  >> /tmp/s.sh
+    - cat /tmp/s.sh
+    - |
+      docker run -e cred="$(cat /tmp/cred.py)" submark \
+        bash -c "$(cat /tmp/s.sh)"

@@ -1,0 +1,4 @@
+.git/
+.stack-work/
+circle.yml
+submark.cabal

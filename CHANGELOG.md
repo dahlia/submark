@@ -4,4 +4,4 @@
 Version 0.1.0
 --------------
 
-To be released.
+Initial release.  Released on September 24, 2017.
