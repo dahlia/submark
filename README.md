@@ -52,6 +52,14 @@ $ submark --h2 "Download" index.text
 (18 KB) -- 17 Dec 2004
 ~~~~~~~~
 
+The leading heading can be omitted:
+
+~~~~~~~~ bash
+$ submark --h2 "Download" --omit-heading index.text
+[Markdown 1.0.1](http://daringfireball.net/projects/downloads/Markdown_1.0.1.zip)
+(18 KB) -- 17 Dec 2004
+~~~~~~~~
+
 By Unix convention, `-` means pipe: 
 
 ~~~~~~~~ bash

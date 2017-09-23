@@ -13,6 +13,7 @@ data HeadingPattern = HeadingPattern Level Text deriving (Eq, Ord, Show)
 data Extraction = Extraction 
     { outputFilePath :: FilePath
     , headingPattern :: HeadingPattern
+    , omitHeading :: Bool
     , columnWidth :: Maybe Int
     , inputFilePath :: FilePath
     } deriving (Eq, Ord, Show)
@@ -45,6 +46,10 @@ parser = Extraction
                   <> help "Write output to FILE"
                   )
     <*> headingLevel
+    <*> switch (  long "omit-heading"
+               <> short 'O'
+               <> help "Omit a leading heading"
+               )
     <*> ( Just . read <$> strOption
             (  long "columns"
             <> short 'c'
@@ -83,11 +88,14 @@ withOutputFile Extraction { outputFilePath = o } action' =
 
 extract :: Extraction -> IO ()
 extract e@Extraction { headingPattern = (HeadingPattern level title)
+                     , omitHeading = omitHeading'
                      , columnWidth = width
                      } = do
     text <- withInputFile e TIO.hGetContents
     let doc = commonmarkToNode [] text
-        node = extractSection level title doc
+        node = case (omitHeading', extractSection level title doc) of
+            (True, Node p DOCUMENT (_ : xs)) -> Node p DOCUMENT xs
+            (_, other) -> other
         result = nodeToCommonmark [] width node
     withOutputFile e (`TIO.hPutStrLn` result)
 
