@@ -1,0 +1,42 @@
+name: submark
+version: '0.1.0'
+synopsis: Extract a part from CommonMark/Markdown docs
+category: Text
+author: Hong Minhee
+maintainer: hong.minhee@gmail.com
+copyright: (c) 2017 Hong Minhee
+license: GPL-3
+github: dahlia/submark
+stability: alpha
+extra-source-files:
+- README.md
+dependencies:
+- base >= 4.7 && < 5
+- cmark >= 0.5.6 && < 0.6.0
+- text == 1.*
+ghc-options:
+- -Wall
+- -Werror
+- -fwarn-incomplete-uni-patterns
+library:
+  source-dirs: src
+executables:
+  submark:
+    main: Main.hs
+    source-dirs: app
+    dependencies:
+    - submark
+    - optparse-applicative >= 0.13.2.0 && < 0.15.0.0
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs: test
+    dependencies:
+    - hspec >= 2.4.4 && < 3.0.0
+    - submark
+    - template-haskell >= 2.5
+  hlint:
+    main: HLint.hs
+    source-dirs: test
+    dependencies:
+    - hlint >= 2.0.9 && < 3
