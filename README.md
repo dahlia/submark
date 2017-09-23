@@ -57,4 +57,10 @@ $ submark --h2 "Download" - < index.text
 (18 KB) -- 17 Dec 2004
 ~~~~~~~~
 
+There's `-o`/`--out-file` option as well:
+
+~~~~~~~~ bash
+$ submark -o download.md --h2 "Download" index.text
+~~~~~~~~
+
 [1]: https://daringfireball.net/projects/markdown/index.text
