@@ -14,6 +14,11 @@ dependencies:
 - base >= 4.7 && < 5
 - cmark >= 0.5.6 && < 0.6.0
 - text == 1.*
+flags:
+  static:
+    description: Static link
+    manual: true
+    default: false
 ghc-options:
 - -Wall
 - -Werror
@@ -27,6 +32,24 @@ executables:
     dependencies:
     - submark
     - optparse-applicative >= 0.13.2.0 && < 0.15.0.0
+    when:
+    - condition: flag(static)
+      then:
+        ghc-options:
+        - -Wall
+        - -Werror
+        - -fwarn-incomplete-uni-patterns
+        # Static link
+        - -static
+        - -optl-static
+        - -optl-pthread
+        - -optc-Os
+        - -fPIC
+      else:
+        ghc-options:
+        - -Wall
+        - -Werror
+        - -fwarn-incomplete-uni-patterns
 tests:
   spec:
     main: Spec.hs

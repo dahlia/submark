@@ -1,0 +1,18 @@
+machine:
+  services:
+  - docker
+dependencies:
+  override:
+  - docker info
+  - |
+    if [[ -e ~/docker/image.tar ]]; then
+      docker load -i ~/docker/image.tar
+    fi
+  - docker build --rm=false -t submark .
+  - mkdir -p ~/docker
+  - docker save submark > ~/docker/image.tar
+  cache_directories:
+  - ~/docker
+test:
+  override:
+  - docker run submark stack test
