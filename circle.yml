@@ -48,7 +48,7 @@ deployment:
     commands:
     # GitHub releases
     - |
-      release_note="$(~/bin/submark --h2 'Version $CIRCLE_TAG' -O CHANGELOG.md)"
+      release_note="$(~/bin/submark --h2 "Version $CIRCLE_TAG" -O CHANGELOG.md)"
       echo "$release_note"
       ~/bin/github-release release \
         --user "$CIRCLE_PROJECT_USERNAME" \
