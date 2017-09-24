@@ -4,10 +4,10 @@
 [![CircleCI][circleci-badge]][circleci]
 
 `submark` is a CLI program to extract some particular section from
-a givne CommonMark/Markdown document.  I use it for myself to extract
+a given CommonMark/Markdown document.  I use it for myself to extract
 the latest version section from the CHANGELOG.md file, and then reuse the text
 for the corresponding release note on GitHub releases, during automated release
-process which is run on CI.
+process which is running on CI.
 
 [circleci-badge]: https://circleci.com/gh/dahlia/submark.svg?style=shield
 [circleci]: https://circleci.com/gh/dahlia/submark
