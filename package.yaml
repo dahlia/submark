@@ -1,5 +1,5 @@
 name: submark
-version: '0.1.0'
+version: '0.1.1'
 synopsis: Extract a part from CommonMark/Markdown docs
 category: Text
 author: Hong Minhee
