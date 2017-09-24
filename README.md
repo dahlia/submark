@@ -13,6 +13,29 @@ process which is run on CI.
 [circleci]: https://circleci.com/gh/dahlia/submark
 
 
+Download & installation
+-----------------------
+
+For Linux x86_64, executable binaries are available on [GitHub releases][].
+Each file is a single executable, and statically linked so that it's executable
+as a standalone without dependencies.
+
+For other platforms, you need to build it by yourself.  It's written in Haskell,
+so you need to install [Haskell Stack][] first.  It can be built in the same
+way other Haskell programs are:
+
+~~~~~~~~ bash
+$ stack setup && stack install
+~~~~~~~~
+
+I'm going to officially support executable binaries for other platforms
+if anyone asks.  (I thought `submark` wouldn't be useful on other than Linux
+since the most of CI machines are Linux, but it might be wrong.)
+
+[GitHub releases]: https://github.com/dahlia/submark/releases
+[Haskell Stack]: https://haskellstack.org/
+
+
 Usage examples
 --------------
 
