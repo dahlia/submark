@@ -78,7 +78,9 @@ deployment:
       echo "sed -i 's/^ *- -Werror$//g' package.yaml"              >> /tmp/s.sh
       #    ^ Hackage disallows -Werror
       echo 'stack sdist --ignore-check'                            >> /tmp/s.sh
-      echo 'stack upload --ignore-check --no-signature . || true'  >> /tmp/s.sh
+      echo 'stack upload --no-terminal --ignore-check \'           >> /tmp/s.sh
+      echo '  --no-signature . || true'                            >> /tmp/s.sh
+      # '
     - cat /tmp/s.sh
     - |
       docker run -e cred="$(cat /tmp/cred.py)" submark \
