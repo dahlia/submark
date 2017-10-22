@@ -2,6 +2,7 @@
 =======================================================
 
 [![CircleCI][circleci-badge]][circleci]
+[![Hackage][hackage-badge]][hackage]
 
 `submark` is a CLI program to extract some particular section from
 a given CommonMark/Markdown document.  I use it for myself to extract
@@ -11,6 +12,8 @@ process which is run on CI.
 
 [circleci-badge]: https://circleci.com/gh/dahlia/submark.svg?style=shield
 [circleci]: https://circleci.com/gh/dahlia/submark
+[hackage-badge]: https://img.shields.io/hackage/v/submark.svg
+[hackage]: https://hackage.haskell.org/package/submark
 
 
 Download & installation
