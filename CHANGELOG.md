@@ -4,7 +4,7 @@
 Version 0.2.0
 -------------
 
-To be released.
+Released on November 6, 2017.
 
  -  Added `-i`/`--ignore-case` option for case insensitive match.
 
