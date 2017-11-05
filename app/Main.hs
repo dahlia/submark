@@ -1,3 +1,4 @@
+import Data.Maybe
 import Data.Semigroup ((<>))
 import System.IO
 
@@ -102,7 +103,7 @@ extract e@Extraction { headingPattern = (HeadingPattern level title)
         node = case (omitHeading', extractSection level equals title doc) of
             (True, Node p DOCUMENT (_ : xs)) -> Node p DOCUMENT xs
             (_, other) -> other
-        result = nodeToCommonmark [] width node
+        result = nodeToCommonmark [] (Just $ fromMaybe (-1) width) node
     withOutputFile e (`TIO.hPutStrLn` result)
   where
     equals :: Text -> Text -> Bool

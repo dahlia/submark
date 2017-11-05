@@ -8,6 +8,9 @@ To be released.
 
  -  Added `-i`/`--ignore-case` option for case insensitive match.
 
+ -  Wordwrap became turned off by default unless `-c`/`--columns` option is
+    present.
+
  -  The signature of `Text.CommonMark.Sub.extractSection` function was changed
     from `Level -> Text -> Node -> Node` to
     `Level -> (Text -> Text -> Bool) -> Text -> Node -> Node`; the second
