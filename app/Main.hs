@@ -93,7 +93,7 @@ extract e@Extraction { headingPattern = (HeadingPattern level title)
                      } = do
     text <- withInputFile e TIO.hGetContents
     let doc = commonmarkToNode [] text
-        node = case (omitHeading', extractSection level title doc) of
+        node = case (omitHeading', extractSection level (==) title doc) of
             (True, Node p DOCUMENT (_ : xs)) -> Node p DOCUMENT xs
             (_, other) -> other
         result = nodeToCommonmark [] width node

@@ -6,6 +6,11 @@ Version 0.2.0
 
 To be released.
 
+ -  The signature of `Text.CommonMark.Sub.extractSection` function was changed
+    from `Level -> Text -> Node -> Node` to
+    `Level -> (Text -> Text -> Bool) -> Text -> Node -> Node`; the second
+    parameter, a predicate for text equality, was added.
+
  -  The signature of `Text.CommonMark.Sub.matchesHeading` function was changed
     from `Level -> Text -> Node -> Bool` to
     `Level -> (Text -> Text -> Bool) -> Text -> Node -> Bool`; the second

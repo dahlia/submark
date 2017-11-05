@@ -10,8 +10,8 @@ import Prelude hiding (concat)
 import CMark
 import Data.Text (Text, concat, pack, strip)
 
-extractSection :: Level -> Text -> Node -> Node
-extractSection headingLevel headingTitle (Node pos DOCUMENT nodes) =
+extractSection :: Level -> (Text -> Text -> Bool) -> Text -> Node -> Node
+extractSection headingLevel equals headingTitle (Node pos DOCUMENT nodes) =
     Node pos DOCUMENT $ case headlessNodes of
         (x : xs) -> x : takeWhile (isInSection headingLevel) xs
         [] -> []
@@ -21,8 +21,8 @@ extractSection headingLevel headingTitle (Node pos DOCUMENT nodes) =
     isInSection _ _ = True
     headlessNodes :: [Node]
     headlessNodes =
-        dropWhile (not . matchesHeading headingLevel (==) headingTitle) nodes
-extractSection _ _ (Node pos _ _) = Node pos DOCUMENT []
+        dropWhile (not . matchesHeading headingLevel equals headingTitle) nodes
+extractSection _ _ _ (Node pos _ _) = Node pos DOCUMENT []
 
 matchesHeading :: Level -> (Text -> Text -> Bool) -> Text -> Node -> Bool
 matchesHeading level equals text (Node _ (HEADING lv) nodes) =
