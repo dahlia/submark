@@ -2,6 +2,7 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Text.CommonMark.SubSpec (spec) where
 
+import Data.Text
 import Test.Hspec
 
 import Text.CommonMark.QQ
@@ -57,13 +58,20 @@ ea agam putant consectetuer sed.
 
 |]
     specify "matchesHeading" $ do
-        [node|# Title|] `shouldSatisfy` matchesHeading 1 "Title"
-        [node|### Title|] `shouldSatisfy` matchesHeading 3 "Title"
-        [node|# Other title|] `shouldSatisfy` matchesHeading 1 "Other title"
+        [node|# Title|] `shouldSatisfy` matchesHeading 1 (==) "Title"
+        [node|### Title|] `shouldSatisfy` matchesHeading 3 (==) "Title"
+        [node|# Other title|] `shouldSatisfy`
+            matchesHeading 1 (==) "Other title"
         [node|# Complex *title*|] `shouldSatisfy`
-            matchesHeading 1 "Complex title"
-        [node|# Title|] `shouldNotSatisfy` matchesHeading 2 "Title"
-        [node|# Title|] `shouldNotSatisfy` matchesHeading 1 "Wrong title"
+            matchesHeading 1 (==) "Complex title"
+        [node|# Title|] `shouldNotSatisfy` matchesHeading 2 (==) "Title"
+        [node|# Title|] `shouldNotSatisfy` matchesHeading 1 (==) "Wrong title"
+        [node|# Title|] `shouldNotSatisfy` matchesHeading 1 (==) "title"
+        let ciEq t t' = toLower t == toLower t'
+        [node|# Title|] `shouldNotSatisfy` matchesHeading 1 (==) "title"
+        [node|# Title|] `shouldSatisfy` matchesHeading 1 ciEq "title"
+        [node|# Title|] `shouldNotSatisfy` matchesHeading 2 (==) "title"
+        [node|# Title|] `shouldNotSatisfy` matchesHeading 2 ciEq "title"
     specify "flattenInlineNodes" $ do
         flattenInlineNodes [nodes|*Test* nodes.|] `shouldBe` "Test nodes."
         flattenInlineNodes [nodes|Testing multiple paragraphs.

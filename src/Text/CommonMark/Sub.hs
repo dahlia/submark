@@ -21,13 +21,13 @@ extractSection headingLevel headingTitle (Node pos DOCUMENT nodes) =
     isInSection _ _ = True
     headlessNodes :: [Node]
     headlessNodes =
-        dropWhile (not . matchesHeading headingLevel headingTitle) nodes
+        dropWhile (not . matchesHeading headingLevel (==) headingTitle) nodes
 extractSection _ _ (Node pos _ _) = Node pos DOCUMENT []
 
-matchesHeading :: Level -> Text -> Node -> Bool
-matchesHeading level text (Node _ (HEADING lv) nodes) =
-    lv == level && flattenInlineNodes nodes == text
-matchesHeading _ _ _ = False
+matchesHeading :: Level -> (Text -> Text -> Bool) -> Text -> Node -> Bool
+matchesHeading level equals text (Node _ (HEADING lv) nodes) =
+    lv == level && flattenInlineNodes nodes `equals` text
+matchesHeading _ _ _ _ = False
 
 flattenInlineNodes :: [Node] -> Text
 flattenInlineNodes =
