@@ -13,6 +13,7 @@ data HeadingPattern = HeadingPattern Level Text deriving (Eq, Ord, Show)
 data Extraction = Extraction 
     { outputFilePath :: FilePath
     , headingPattern :: HeadingPattern
+    , ignoreCase :: Bool
     , omitHeading :: Bool
     , columnWidth :: Maybe Int
     , inputFilePath :: FilePath
@@ -46,6 +47,10 @@ parser = Extraction
                   <> help "Write output to FILE"
                   )
     <*> headingLevel
+    <*> switch (  long "ignore-case"
+               <> short 'i'
+               <> help "Ignore case distinctions"
+               )
     <*> switch (  long "omit-heading"
                <> short 'O'
                <> help "Omit a leading heading"
@@ -88,16 +93,20 @@ withOutputFile Extraction { outputFilePath = o } action' =
 
 extract :: Extraction -> IO ()
 extract e@Extraction { headingPattern = (HeadingPattern level title)
+                     , ignoreCase = ignoreCase'
                      , omitHeading = omitHeading'
                      , columnWidth = width
                      } = do
     text <- withInputFile e TIO.hGetContents
     let doc = commonmarkToNode [] text
-        node = case (omitHeading', extractSection level (==) title doc) of
+        node = case (omitHeading', extractSection level equals title doc) of
             (True, Node p DOCUMENT (_ : xs)) -> Node p DOCUMENT xs
             (_, other) -> other
         result = nodeToCommonmark [] width node
     withOutputFile e (`TIO.hPutStrLn` result)
+  where
+    equals :: Text -> Text -> Bool
+    equals = if ignoreCase' then (\ a b -> toLower a == toLower b) else (==)
 
 main :: IO ()
 main = execParser parserInfo >>= extract
