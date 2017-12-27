@@ -1,4 +1,7 @@
 machine:
+  environment:
+    CHECKMATE_DOWNLOAD_URL: https://github.com/spoqa/checkmate/releases/download/0.3.2/checkmate-linux-x86_64
+    GITHUB_RELEASE_DOWNLOAD_URL: https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2
   services:
   - docker
 dependencies:
@@ -14,11 +17,13 @@ dependencies:
   - mkdir -p ~/docker
   - docker save submark > ~/docker/image.tar
   - mkdir -p ~/bin/
+  - curl -L -o ~/bin/checkmate "$CHECKMATE_DOWNLOAD_URL"
+  - chmod +x ~/bin/checkmate
   - |
     if [[ "$CIRCLE_TAG" != "" ]]; then
       pushd /tmp
-      curl -OL https://github.com/aktau/github-release/releases/download/v0.7.2/linux-amd64-github-release.tar.bz2
-      tar xvfj linux-amd64-github-release.tar.bz2
+      curl -L -o github-release.tar.bz2 "$GITHUB_RELEASE_DOWNLOAD_URL"
+      tar xvfj github-release.tar.bz2
       mv bin/linux/amd64/github-release ~/bin/
     fi
   cache_directories:
@@ -38,6 +43,7 @@ compile:
 test:
   override:
   - docker run submark stack test
+  - ~/bin/checkmate github-circle --token "$GITHUB_TOKEN"
   - |
     v="$(docker run submark stack query locals submark version)"
     [[ "$CIRCLE_TAG" = "" || "$v" = "'$CIRCLE_TAG'" ]]

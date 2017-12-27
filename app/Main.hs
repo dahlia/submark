@@ -40,6 +40,7 @@ headingLevel =
 
 parser :: Parser Extraction
 parser = Extraction
+    -- CHECK: Write docs in README.md for a new option.
     <$> strOption (  long "out-file"
                   <> short 'o'
                   <> metavar "FILE"
