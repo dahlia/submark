@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE TemplateHaskellQuotes #-}
 module Text.CommonMark.QQ (doc, node, nodes) where
 
 import CMark

@@ -1,5 +1,4 @@
 import Data.Maybe
-import Data.Semigroup ((<>))
 import System.IO
 
 import CMark
@@ -28,7 +27,7 @@ headingLevel =
     levels = [1..6]
     parsers :: [Parser HeadingPattern]
     parsers =
-        [ (HeadingPattern l . pack) <$> strOption
+        [ HeadingPattern l . pack <$> strOption
               (  long ("h" ++ show l)
               <> metavar "TITLE"
               <> help ("Extract the section with the heading level " ++

@@ -1,7 +1,7 @@
 # To correctly make a statically-linked binary, we use Alpine Linux.
 # The distro entirely uses musl instead of glibc which is unfriendly to be
 # statically linked.
-FROM alpine:3.6
+FROM alpine:3.15
 
 RUN apk add --no-cache bash build-base curl ghc zlib-dev
 RUN curl -sSL https://get.haskellstack.org/ | bash
