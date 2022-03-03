@@ -1,0 +1,39 @@
+name: build
+on:
+  push: []
+  schedule:
+  - cron: 59 14 * * *
+  pull_request: []
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: haskell/actions/setup@v1
+      with:
+        enable-stack: true
+    - name: Cache Stack files (non-Windows)
+      if: "runner.os != 'Windows'"
+      uses: actions/cache@v2
+      with:
+        path: |
+          ~/.cabal/packages
+          ~/.cabal/store
+          ~/.stack
+        key: stack-${{ runner.os }}-${{ runner.arch }}
+    - name: Cache Stack files (Windows)
+      if: "runner.os == 'Windows'"
+      uses: actions/cache@v2
+      with:
+        path: |
+          %APPDATA%\cabal\packages
+          %APPDATA%\cabal\store
+          %APPDATA%\stack
+        key: stack-${{ runner.os }}-${{ runner.arch }}
+    - name: Resolve dependencies
+      run: stack install --test --only-dependencies
+    - name: Build
+      run: stack build --test
+    - name: Test
+      run: stack test
