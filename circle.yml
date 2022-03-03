@@ -32,7 +32,7 @@ compile:
   override:
   - |
     pushd ~/bin/
-    docker run submark cat /root/.local/bin/submark > submark
+    docker run submark cat /usr/bin/submark > submark
     chmod +x submark
     ldd submark
     upx-ucl -9 submark
