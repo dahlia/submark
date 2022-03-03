@@ -1,7 +1,7 @@
 `submark`: Extract a part from CommonMark/Markdown docs
 =======================================================
 
-[![CircleCI][circleci-badge]][circleci]
+[![GitHub Actions][gh-actions-badge]][gh-actions]
 [![Hackage][hackage-badge]][hackage]
 
 `submark` is a CLI program to extract some particular section from
@@ -10,8 +10,8 @@ the latest version section from the CHANGELOG.md file, and then reuse the text
 for the corresponding release note on GitHub releases, during automated release
 process which is run on CI.
 
-[circleci-badge]: https://circleci.com/gh/dahlia/submark.svg?style=shield
-[circleci]: https://circleci.com/gh/dahlia/submark
+[gh-actions-badge]: https://github.com/dahlia/submark/actions/workflows/build.yaml/badge.svg
+[gh-actions]: https://github.com/dahlia/submark/actions/workflows/build.yaml
 [hackage-badge]: https://img.shields.io/hackage/v/submark.svg
 [hackage]: https://hackage.haskell.org/package/submark
 
