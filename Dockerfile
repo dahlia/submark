@@ -5,6 +5,8 @@ FROM alpine:3.15 AS build
 
 LABEL "org.opencontainers.image.title"="submark"
 LABEL "org.opencontainers.image.licenses"="GPL-3"
+LABEL "org.opencontainers.image.description"="Extract a part from \
+CommonMark/Markdown docs"
 
 RUN apk add --no-cache \
   bash=5.1.16-r0 \
