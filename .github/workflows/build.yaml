@@ -44,3 +44,37 @@ jobs:
       run: stack build --test
     - name: Test
       run: stack test
+    - if: github.ref_type == 'tag'
+      run: '[[ "$(stack query locals submark version)" = "$GITHUB_REF_NAME" ]]'
+
+  docker-image:
+    env:
+      IMG_REPO: ghcr.io/${{ github.repository }}
+      IMG_TAG: git-${{ github.sha }}
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - uses: satackey/action-docker-layer-caching@v0.0.11
+      continue-on-error: true
+    - run: |
+        set -exv
+        if [[ "$GITHUB_REF_TYPE" = "tag" ]]; then
+          tag_label="--label org.opencontainers.image.version=$GITHUB_REF_NAME"
+        fi
+        docker build \
+          --tag "$IMG_REPO:$IMG_TAG" \
+          --label \
+            org.opencontainers.image.url=https://github.com/$GITHUB_REPOSITORY \
+          $tag_label \
+          .
+        docker login ghcr.io \
+          --username "$GITHUB_REPOSITORY_OWNER" \
+          --password-stdin <<< "${{ secrets.GITHUB_TOKEN }}"
+        docker push "$IMG_REPO:$IMG_TAG"
+    - if: github.ref_type == 'tag'
+      run: |
+        set -exv
+        docker tag "$IMG_REPO:$IMG_TAG" "$IMG_REPO:$GITHUB_REF_NAME"
+        docker push "$IMG_REPO:$GITHUB_REF_NAME"
+        docker tag "$IMG_REPO:$IMG_TAG" "$IMG_REPO:latest"
+        docker push "$IMG_REPO:latest"
