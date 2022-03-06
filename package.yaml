@@ -22,7 +22,6 @@ flags:
     default: false
 ghc-options:
 - -Wall
-- -Werror
 - -fwarn-incomplete-uni-patterns
 library:
   source-dirs: src
@@ -38,7 +37,6 @@ executables:
       then:
         ghc-options:
         - -Wall
-        - -Werror
         - -fwarn-incomplete-uni-patterns
         # Static link
         - -static
@@ -49,7 +47,6 @@ executables:
       else:
         ghc-options:
         - -Wall
-        - -Werror
         - -fwarn-incomplete-uni-patterns
 tests:
   spec:

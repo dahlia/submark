@@ -44,6 +44,20 @@ jobs:
       run: stack build --test
     - name: Test
       run: stack test
+    - name: Build for release (Linux & Windows)
+      if: runner.os == 'Linux' || runner.os == 'Windows'
+      run: stack build --flag submark:static --copy-bins
+    - name: Build for release (macOS)
+      if: runner.os == 'macOS'
+      run: stack build --copy-bins
+    - id: bin-path
+      run: |
+        echo "::set-output name=bin-path::$(stack path --local-bin)/submark"
+    - uses: crazy-max/ghaction-upx@v1
+      if: runner.os == 'Linux' || runner.os == 'Windows'
+      with:
+        files: ${{ steps.bin-path.outputs.bin-path }}
+        args: "-9"
     - if: github.ref_type == 'tag'
       run: '[[ "$(stack query locals submark version)" = "$GITHUB_REF_NAME" ]]'
 

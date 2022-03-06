@@ -10,6 +10,7 @@ RUN apk add --no-cache \
   ghc=9.0.1-r1 \
   libffi-dev=3.4.2-r1 \
   ncurses-dev=6.3_p20211120-r0 \
+  upx=3.96-r1 \
   yq=4.14.1-r0 \
   zlib-dev=1.2.11-r3
 RUN curl -sSL https://get.haskellstack.org/ | bash
@@ -35,6 +36,7 @@ COPY . /src/submark
 RUN cp /tmp/stack.yaml.bak /src/submark/stack.yaml
 
 RUN stack build --flag submark:static --copy-bins
+RUN upx -9 "$(stack path --local-bin)/submark"
 RUN stack exec -- submark || true
 
 FROM alpine:3.15
