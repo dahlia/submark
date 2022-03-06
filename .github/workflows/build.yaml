@@ -56,8 +56,13 @@ jobs:
     - uses: crazy-max/ghaction-upx@v1
       if: runner.os == 'Linux' || runner.os == 'Windows'
       with:
-        files: ${{ steps.bin-path.outputs.bin-path }}
+        files: ${{ steps.bin-path.outputs.bin-path }}*
         args: "-9"
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ runner.os }}-executable
+        path: ${{ steps.bin-path.outputs.bin-path }}*
+        if-no-files-found: error
     - if: github.ref_type == 'tag'
       run: '[[ "$(stack query locals submark version)" = "$GITHUB_REF_NAME" ]]'
 
@@ -110,3 +115,46 @@ jobs:
         docker push "$IMG_REPO:$GITHUB_REF_NAME"
         docker tag "$IMG_REPO:$IMG_TAG" "$IMG_REPO:latest"
         docker push "$IMG_REPO:latest"
+    - run: |
+        docker run "$IMG_REPO:$IMG_TAG" cat /usr/bin/submark \
+          > "$RUNNER_TEMP/submark"
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ runner.os }}-musl-executable
+        path: ${{ runner.temp }}/submark
+        if-no-files-found: error
+
+  release:
+    needs: [test, docker-image]
+    runs-on: ubuntu-20.04
+    steps:
+    - run:
+        set -evx
+        mkdir -p "$RUNNER_TEMP/linux/"
+        mkdir -p "$RUNNER_TEMP/macos/"
+        mkdir -p "$RUNNER_TEMP/windows/"
+    - uses: actions/download-artifact@v3
+      with:
+        name: Linux-musl-executable
+        path: ${{ runner.temp }}/linux
+    - uses: actions/download-artifact@v3
+      with:
+        name: macOS-executable
+        path: ${{ runner.temp }}/macos
+    - uses: actions/download-artifact@v3
+      with:
+        name: Windows-executable
+        path: ${{ runner.temp }}/windows
+    - run: |
+        set -evx
+        mkdir -p "$RUNNER_TEMP/dist/"
+        mv "$RUNNER_TEMP/linux/submark" "$RUNNER_TEMP/dist/submark-linux-x86_64"
+        mv "$RUNNER_TEMP/macos/submark" \
+          "$RUNNER_TEMP/dist/submark-darwin-x86_64"
+        mv "$RUNNER_TEMP/windows/submark.exe" \
+          "$RUNNER_TEMP/dist/submark-win64.exe"
+    - uses: actions/upload-artifact@v3
+      with:
+        name: dist
+        path: ${{ runner.temp }}/dist/
+        if-no-files-found: error
