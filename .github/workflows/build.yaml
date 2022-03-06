@@ -129,6 +129,14 @@ jobs:
     runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v2
+    - uses: haskell/actions/setup@v1
+      with:
+        enable-stack: true
+    - run: |
+        set -evx
+        mkdir -p "$RUNNER_TEMP/dist/"
+        stack sdist
+        cp "$(stack path --dist-dir)"/submark-*.tar.gz "$RUNNER_TEMP/dist/"
     - run:
         set -evx
         mkdir -p "$RUNNER_TEMP/linux/"
@@ -148,7 +156,6 @@ jobs:
         path: ${{ runner.temp }}/windows
     - run: |
         set -evx
-        mkdir -p "$RUNNER_TEMP/dist/"
         mv "$RUNNER_TEMP/linux/submark" "$RUNNER_TEMP/dist/submark-linux-x86_64"
         mv "$RUNNER_TEMP/macos/submark" \
           "$RUNNER_TEMP/dist/submark-darwin-x86_64"
@@ -158,7 +165,7 @@ jobs:
         set -evx
         chmod +x "$RUNNER_TEMP/dist/submark-linux-x86_64"
         "$RUNNER_TEMP/dist/submark-linux-x86_64" \
-          --h2 "Version $GITHUB_REF_NAME" \
+          --h2 "Version $(stack query locals submark version)" \
           --omit-heading \
           --out-file "$RUNNER_TEMP/dist/RELEASE.md" \
           CHANGELOG.md
@@ -167,3 +174,18 @@ jobs:
         name: dist
         path: ${{ runner.temp }}/dist/
         if-no-files-found: error
+    - if: github.ref_type == 'tag'
+      uses: softprops/action-gh-release@v1
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        body_path: ${{ runner.temp }}/dist/RELEASE.md
+        files: |
+          ${{ runner.temp }}/dist/submark-linux-x86_64
+          ${{ runner.temp }}/dist/submark-darwin-x86_64
+          ${{ runner.temp }}/dist/submark-win64.exe
+          ${{ runner.temp }}/dist/submark-${{ github.ref_name }}.tar.gz
+    - if: github.ref_type == 'tag'
+      run: stack upload --no-terminal --ignore-check --no-signature .
+      env:
+        HACKAGE_USERNAME: ${{ secrets.HACKAGE_USERNAME }}
+        HACKAGE_PASSWORD: ${{ secrets.HACKAGE_PASSWORD }}
