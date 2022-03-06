@@ -61,6 +61,24 @@ jobs:
     - if: github.ref_type == 'tag'
       run: '[[ "$(stack query locals submark version)" = "$GITHUB_REF_NAME" ]]'
 
+  check:
+    if: github.event_name == 'pull_request'
+    env:
+      CHECKMATE_DOWNLOAD_URL: https://github.com/dahlia/checkmate/releases/download/0.4.0/checkmate-linux-x86_64
+    runs-on: ubuntu-20.04
+    steps:
+    - uses: actions/checkout@v2
+    - run: |
+        set -evx
+        mkdir -p ~/bin
+        curl -L -o ~/bin/checkmate "$CHECKMATE_DOWNLOAD_URL"
+        chmod +x ~/bin/checkmate
+        ~/bin/checkmate github \
+          --token "${{ secrets.GITHUB_TOKEN }}" \
+          --login "$GITHUB_REPOSITORY_OWNER" \
+          --repo "${GITHUB_REPOSITORY#*/}" \
+          --pr "$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")"
+
   docker-image:
     env:
       IMG_REPO: ghcr.io/${{ github.repository }}
