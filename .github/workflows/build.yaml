@@ -128,6 +128,7 @@ jobs:
     needs: [test, docker-image]
     runs-on: ubuntu-20.04
     steps:
+    - uses: actions/checkout@v2
     - run:
         set -evx
         mkdir -p "$RUNNER_TEMP/linux/"
@@ -153,6 +154,14 @@ jobs:
           "$RUNNER_TEMP/dist/submark-darwin-x86_64"
         mv "$RUNNER_TEMP/windows/submark.exe" \
           "$RUNNER_TEMP/dist/submark-win64.exe"
+    - run: |
+        set -evx
+        chmod +x "$RUNNER_TEMP/dist/submark-linux-x86_64"
+        "$RUNNER_TEMP/dist/submark-linux-x86_64" \
+          --h2 "Version $GITHUB_REF_NAME" \
+          --omit-heading \
+          --out-file "$RUNNER_TEMP/dist/RELEASE.md" \
+          CHANGELOG.md
     - uses: actions/upload-artifact@v3
       with:
         name: dist
