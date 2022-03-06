@@ -6,7 +6,7 @@
 
 `submark` is a CLI program to extract some particular section from
 a given CommonMark/Markdown document.  I use it for myself to extract
-the latest version section from the CHANGELOG.md file, and then reuse the text
+the latest version section from the *CHANGELOG.md* file, and then reuse the text
 for the corresponding release note on GitHub releases, during automated release
 process which is run on CI.
 
@@ -19,21 +19,20 @@ process which is run on CI.
 Download & installation
 -----------------------
 
-For Linux x86_64, executable binaries are available on [GitHub releases][].
-Each file is a single executable, and statically linked so that it's executable
-as a standalone without dependencies.
+Prebuilt binaries for the following platforms and architectures are available on
+[GitHub releases]:
 
-For other platforms, you need to build it by yourself.  It's written in Haskell,
-so you need to install [Haskell Stack][] first.  It can be built in the same
-way other Haskell programs are:
+ -  Linux (x86_64)
+ -  macOS (x86_64)
+ -  Windows (win64)
+
+For other platforms and architectures, you need to build it by yourself.
+It's written in Haskell, so you need to install [Haskell Stack] first.
+It can be built in the same way other Haskell programs are:
 
 ~~~~~~~~ bash
 $ stack setup && stack install
 ~~~~~~~~
-
-I'm going to officially support executable binaries for other platforms
-if anyone asks.  (I thought `submark` wouldn't be useful on other than Linux
-since the most of CI machines are Linux, but it might be wrong.)
 
 [GitHub releases]: https://github.com/dahlia/submark/releases
 [Haskell Stack]: https://haskellstack.org/
