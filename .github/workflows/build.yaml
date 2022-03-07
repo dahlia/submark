@@ -63,6 +63,8 @@ jobs:
         name: ${{ runner.os }}-executable
         path: ${{ steps.bin-path.outputs.bin-path }}*
         if-no-files-found: error
+    - if: runner.os != 'Windows'
+      run: 'grep "Version $(stack query locals submark version)" CHANGELOG.md'
     - if: github.ref_type == 'tag'
       run: '[[ "$(stack query locals submark version)" = "$GITHUB_REF_NAME" ]]'
 
