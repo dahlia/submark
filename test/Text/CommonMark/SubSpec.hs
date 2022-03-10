@@ -2,15 +2,11 @@
 {-# LANGUAGE QuasiQuotes #-}
 module Text.CommonMark.SubSpec (spec) where
 
-import Data.Text
 import Test.Hspec
 
 import CMark (Node)
 import Text.CommonMark.QQ
 import Text.CommonMark.Sub
-
-ciEq :: Text -> Text -> Bool
-ciEq t t' = toLower t == toLower t'
 
 source :: Node
 source = [doc|Doc title
@@ -65,31 +61,255 @@ ea agam putant consectetuer sed.
 
 spec :: Spec
 spec = do
-    specify "extractSection" $ do
-        extractSection 2 (==) "Section to extract" source `shouldBe` expected
-        extractSection 3 (==) "Section to extract" source `shouldNotBe` expected
-        extractSection 2 (==) "section to extract" source `shouldNotBe` expected
-        extractSection 3 (==) "section to extract" source `shouldNotBe` expected
-        -- Case insensitivity
-        extractSection 2 ciEq "Section to extract" source `shouldBe` expected
-        extractSection 3 ciEq "Section to extract" source `shouldNotBe` expected
-        extractSection 2 ciEq "section to extract" source `shouldBe` expected
-        extractSection 3 ciEq "section to extract" source `shouldNotBe` expected
-    specify "matchesHeading" $ do
-        [node|# Title|] `shouldSatisfy` matchesHeading 1 (==) "Title"
-        [node|### Title|] `shouldSatisfy` matchesHeading 3 (==) "Title"
-        [node|# Other title|] `shouldSatisfy`
-            matchesHeading 1 (==) "Other title"
-        [node|# Complex *title*|] `shouldSatisfy`
-            matchesHeading 1 (==) "Complex title"
-        [node|# Title|] `shouldNotSatisfy` matchesHeading 2 (==) "Title"
-        [node|# Title|] `shouldNotSatisfy` matchesHeading 1 (==) "Wrong title"
-        [node|# Title|] `shouldNotSatisfy` matchesHeading 1 (==) "title"
-        -- Case insensitivity
-        [node|# Title|] `shouldNotSatisfy` matchesHeading 1 (==) "title"
-        [node|# Title|] `shouldSatisfy` matchesHeading 1 ciEq "title"
-        [node|# Title|] `shouldNotSatisfy` matchesHeading 2 (==) "title"
-        [node|# Title|] `shouldNotSatisfy` matchesHeading 2 ciEq "title"
+    describe "extractSection" $ do
+        specify "w/ HeadingTitleText" $ do
+            extractSection
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "Section to extract"
+                    }
+                source
+                `shouldBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 3
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "Section to extract"
+                    }
+                source
+                `shouldNotBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "section to extract"
+                    }
+                source
+                `shouldNotBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 3
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "section to extract"
+                    }
+                source
+                `shouldNotBe` expected
+            -- Case insensitivity
+            extractSection
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleText "Section to extract"
+                    }
+                source
+                `shouldBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 3
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleText "Section to extract"
+                    }
+                source
+                `shouldNotBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleText "section to extract"
+                    }
+                source
+                `shouldBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 3
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleText "section to extract"
+                    }
+                source
+                `shouldNotBe` expected
+        specify "w/ HeadingTitleRegex" $ do
+            extractSection
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleRegex "to[[:space:]]+extract$"
+                    }
+                source
+                `shouldBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 3
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleRegex "to[[:space:]]+extract$"
+                    }
+                source
+                `shouldNotBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleRegex "TO[[:space:]]+EXTRACT$"
+                    }
+                source
+                `shouldNotBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 3
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleRegex "TO[[:space:]]+EXTRACT$"
+                    }
+                source
+                `shouldNotBe` expected
+            -- Case insensitivity
+            extractSection
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleRegex "to[[:space:]]+extract$"
+                    }
+                source
+                `shouldBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 3
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleRegex "to[[:space:]]+extract$"
+                    }
+                source
+                `shouldNotBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleRegex "TO[[:space:]]+EXTRACT$"
+                    }
+                source
+                `shouldBe` expected
+            extractSection
+                HeadingPattern
+                    { headingLevel = 3
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleRegex "TO[[:space:]]+EXTRACT$"
+                    }
+                source
+                `shouldNotBe` expected
+    describe "matchesHeading" $ do
+        specify "w/ HeadingTitleText" $ do
+            [node|# Title|] `shouldSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "Title"
+                    }
+            [node|### Title|] `shouldSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 3
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "Title"
+                    }
+            [node|# Other title|] `shouldSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "Other title"
+                    }
+            [node|# Complex *title*|] `shouldSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "Complex title"
+                    }
+            [node|# Title|] `shouldNotSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "Title"
+                    }
+            [node|# Title|] `shouldNotSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "Wrong title"
+                    }
+            [node|# Title|] `shouldNotSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleText "title"
+                    }
+            -- Case insensitivity
+            [node|# Title|] `shouldSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleText "title"
+                    }
+            [node|# Title|] `shouldNotSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleText "title"
+                    }
+        specify "w/ HeadingTitleRegex" $ do
+            [node|# Title|] `shouldSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleRegex "^Title$"
+                    }
+            [node|### Title|] `shouldSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 3
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleRegex "^Title$"
+                    }
+            [node|# Other title|] `shouldSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = False
+                    , titlePattern =
+                        HeadingTitleRegex "^Other[[:space:]]+title$"
+                    }
+            [node|# Complex *title*|] `shouldSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = False
+                    , titlePattern =
+                        HeadingTitleRegex "^Complex[[:space:]]+title$"
+                    }
+            [node|# Title|] `shouldNotSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleRegex "^Title$"
+                    }
+            [node|# Title|] `shouldNotSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = False
+                    , titlePattern =
+                        HeadingTitleRegex "^Wrong[[:space:]]+title$"
+                    }
+            [node|# Title|] `shouldNotSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = False
+                    , titlePattern = HeadingTitleRegex "$title$"
+                    }
+            -- Case insensitivity
+            [node|# Title|] `shouldSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 1
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleRegex "^title$"
+                    }
+            [node|# Title|] `shouldNotSatisfy` matchesHeading
+                HeadingPattern
+                    { headingLevel = 2
+                    , caseInsensitive = True
+                    , titlePattern = HeadingTitleRegex "^title$"
+                    }
     specify "flattenInlineNodes" $ do
         flattenInlineNodes [nodes|*Test* nodes.|] `shouldBe` "Test nodes."
         flattenInlineNodes [nodes|Testing multiple paragraphs.

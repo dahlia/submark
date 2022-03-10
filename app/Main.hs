@@ -1,3 +1,5 @@
+{-# LANGUAGE DisambiguateRecordFields #-}
+{-# LANGUAGE NamedFieldPuns #-}
 import Data.Maybe
 import System.IO
 
@@ -8,9 +10,7 @@ import Options.Applicative
 
 import Text.CommonMark.Sub
 
-data HeadingPattern = HeadingPattern Level Text deriving (Eq, Ord, Show)
-
-data Extraction = Extraction 
+data Extraction = Extraction
     { outputFilePath :: FilePath
     , headingPattern :: HeadingPattern
     , ignoreCase :: Bool
@@ -19,20 +19,39 @@ data Extraction = Extraction
     , inputFilePath :: FilePath
     } deriving (Eq, Ord, Show)
 
-headingLevel :: Parser HeadingPattern
-headingLevel =
+headingPatternParser :: Parser HeadingPattern
+headingPatternParser =
     foldl (<|>) empty parsers
   where
     levels :: [Level]
     levels = [1..6]
     parsers :: [Parser HeadingPattern]
-    parsers =
-        [ HeadingPattern l . pack <$> strOption
+    parsers = titleTextParsers ++ titleRegexParsers
+    titleTextParsers :: [Parser HeadingPattern]
+    titleTextParsers =
+        [ HeadingPattern l False . HeadingTitleText . pack <$> strOption
               (  long ("h" ++ show l)
               <> metavar "TITLE"
               <> help ("Extract the section with the heading level " ++
-                       show l ++ ".  Mutually exclusive with other --h* " ++
-                       "options")
+                       show l ++ ".  Note that it tries to match to the " ++
+                       "heading title with no markup, which means " ++
+                       "--h1 \"foo bar\" matches to both `# foo bar' and " ++
+                       "`# _foo_ **bar**'.  Mutually exclusive with other " ++
+                       "--h* and --h*-regex options.")
+              )
+        | l <- levels
+        ]
+    titleRegexParsers :: [Parser HeadingPattern]
+    titleRegexParsers =
+        [ HeadingPattern l False . HeadingTitleRegex . pack <$> strOption
+              (  long ("h" ++ show l ++ "-regex")
+              <> metavar "PATTERN"
+              <> help ("Similar to --h" ++ show l ++ " except that it takes " ++
+                       "a regular expression.  Note that it tries to match " ++
+                       "to the heading title with no markup, which means " ++
+                       "--h1 \"fo+ ba[rz]\" matches to both `# foo bar' and " ++
+                       "`# _foooo_ **baz**'.  Mutually exclusive with other " ++
+                       "--h* and --h*-regex options.")
               )
         | l <- levels
         ]
@@ -45,29 +64,29 @@ parser = Extraction
                   <> metavar "FILE"
                   <> value "-"
                   <> showDefault
-                  <> help "Write output to FILE"
+                  <> help "Write output to FILE."
                   )
-    <*> headingLevel
+    <*> headingPatternParser
     <*> switch (  long "ignore-case"
                <> short 'i'
-               <> help "Ignore case distinctions"
+               <> help "Ignore case distinctions."
                )
     <*> switch (  long "omit-heading"
                <> short 'O'
-               <> help "Omit a leading heading"
+               <> help "Omit a leading heading."
                )
     <*> ( Just . read <$> strOption
             (  long "columns"
             <> short 'c'
             <> metavar "WIDTH"
             <> help ("Limit the maximum characters per line of the output.  " ++
-                     "No limit by default")
+                     "No limit by default.")
             )
         <|> pure Nothing
         )
     <**> helper
     <*> strArgument (  metavar "FILE"
-                    <> help "CommonMark/Markdown text to extract from"
+                    <> help "CommonMark/Markdown text to extract from."
                     )
 
 parserInfo :: ParserInfo Extraction
@@ -93,21 +112,19 @@ withOutputFile Extraction { outputFilePath = o } action' =
     withFile o WriteMode action'
 
 extract :: Extraction -> IO ()
-extract e@Extraction { headingPattern = (HeadingPattern level title)
-                     , ignoreCase = ignoreCase'
-                     , omitHeading = omitHeading'
-                     , columnWidth = width
+extract e@Extraction { headingPattern
+                     , ignoreCase
+                     , omitHeading
+                     , columnWidth
                      } = do
     text <- withInputFile e TIO.hGetContents
     let doc = commonmarkToNode [] text
-        node = case (omitHeading', extractSection level equals title doc) of
+        pat = headingPattern { caseInsensitive = ignoreCase }
+        node = case (omitHeading, extractSection pat doc) of
             (True, Node p DOCUMENT (_ : xs)) -> Node p DOCUMENT xs
             (_, other) -> other
-        result = nodeToCommonmark [] (Just $ fromMaybe (-1) width) node
+        result = nodeToCommonmark [] (Just $ fromMaybe (-1) columnWidth) node
     withOutputFile e (`TIO.hPutStrLn` result)
-  where
-    equals :: Text -> Text -> Bool
-    equals = if ignoreCase' then (\ a b -> toLower a == toLower b) else (==)
 
 main :: IO ()
 main = execParser parserInfo >>= extract

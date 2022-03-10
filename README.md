@@ -77,6 +77,17 @@ $ submark --h2 "Download" index.text
 (18 KB) -- 17 Dec 2004
 ~~~~~~~~
 
+Options from `--h1-regex` to `--h6-regex` take a regular expression instead of
+an exact heading text:
+
+~~~~~~~~ bash
+$ submark --h2-regex "^(Down|Up)load$" index.text
+## Download
+
+[Markdown 1.0.1](http://daringfireball.net/projects/downloads/Markdown_1.0.1.zip)
+(18 KB) -- 17 Dec 2004
+~~~~~~~~
+
 The leading heading can be omitted:
 
 ~~~~~~~~ bash
@@ -98,7 +109,7 @@ $ submark --h2 "DOWNload" --ignore-case index.text
 (18 KB) -- 17 Dec 2004
 ~~~~~~~~
 
-By Unix convention, `-` means pipe: 
+By Unix convention, `-` means pipe:
 
 ~~~~~~~~ bash
 $ submark --h2 "Download" - < index.text
@@ -115,3 +126,11 @@ $ submark -o download.md --h2 "Download" index.text
 ~~~~~~~~
 
 [1]: https://daringfireball.net/projects/markdown/index.text
+
+
+Software license
+----------------
+
+This software is distributed under [GPL 3].
+
+[GPL 3]: https://www.gnu.org/licenses/gpl-3.0.html

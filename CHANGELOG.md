@@ -6,6 +6,18 @@ Version 0.3.0
 
 To be released.
 
+ -  Added options from `--h1-regex` to `--h6-regex`.  [[#2]]
+ -  Added `Text.CommonMark.Sub.HeadingPattern` type.  [[#2]]
+ -  Added `Text.CommonMark.Sub.HeadingTitlePattern` type.  [[#2]]
+ -  The signature of `Text.CommonMark.Sub.extractSection` function was changed
+    from `Level -> (Text -> Text -> Bool) -> Text -> Node -> Node` to
+    `HeadingPattern -> Node -> Node`.  [[#2]]
+ -  The signature of `Text.CommonMark.Sub.matchesHeading` function was changed
+    from `Level -> (Text -> Text -> Bool) -> Text -> Node -> Bool` to
+    `HeadingPattern -> Node -> Bool`.  [[#2]]
+
+[#2]: https://github.com/dahlia/submark/issues/2
+
 
 Version 0.2.0
 -------------
