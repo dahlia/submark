@@ -6,3 +6,6 @@ flags: {}
 extra-package-dbs: []
 ghc-options:
   submark: -Werror
+
+# https://github.com/commercialhaskell/stack/issues/5290
+save-hackage-creds: false

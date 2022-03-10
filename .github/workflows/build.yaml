@@ -65,7 +65,7 @@ jobs:
         if-no-files-found: error
     - if: runner.os != 'Windows'
       run: 'grep "Version $(stack query locals submark version)" CHANGELOG.md'
-    - if: github.ref_type == 'tag'
+    - if: github.ref_type == 'tag' && runner.os != 'Windows'
       run: '[[ "$(stack query locals submark version)" = "$GITHUB_REF_NAME" ]]'
 
   check:
@@ -181,13 +181,14 @@ jobs:
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         body_path: ${{ runner.temp }}/dist/RELEASE.md
+        name: submark ${{ github.ref_name }}
         files: |
           ${{ runner.temp }}/dist/submark-linux-x86_64
           ${{ runner.temp }}/dist/submark-darwin-x86_64
           ${{ runner.temp }}/dist/submark-win64.exe
           ${{ runner.temp }}/dist/submark-${{ github.ref_name }}.tar.gz
     - if: github.ref_type == 'tag'
-      run: stack upload --no-terminal --ignore-check --no-signature .
+      run: stack upload --no-terminal --ignore-check .
       env:
         HACKAGE_USERNAME: ${{ secrets.HACKAGE_USERNAME }}
         HACKAGE_PASSWORD: ${{ secrets.HACKAGE_PASSWORD }}

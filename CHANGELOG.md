@@ -1,10 +1,10 @@
-`subtoml` changelog
+`submark` changelog
 ===================
 
 Version 0.3.0
 -------------
 
-To be released.
+Released on March 11, 2022.
 
  -  Added options from `--h1-regex` to `--h6-regex`.  [[#2]]
  -  Added `Text.CommonMark.Sub.HeadingPattern` type.  [[#2]]
