@@ -1,0 +1,126 @@
+name: Setup submark
+description: Set up a specific version of submark and add it to the PATH.
+author: Hong Minhee
+branding:
+  icon: file-text
+  color: orange
+inputs:
+  submark-version:
+    description: Version of a submark binary to install.  Note that asterisks can be used to choose the latest version, e.g., 1.2.*, 1.*, *.
+    default: ${{ github.action_ref }}
+  add-to-path:
+    description: Whether to add the installed submark to the PATH.  Turned on by default.
+    default: true
+outputs:
+  submark-version:
+    description: Exact version number of the installed submark.
+    value: ${{ steps.prepare.outputs.submark-version }}
+  submark-path:
+    description: Absolute path of the installed submark.
+    value: ${{ steps.prepare.outputs.submark-path }}
+runs:
+  using: composite
+  steps:
+  - id: prepare
+    shell: python
+    run: |
+      from __future__ import print_function
+      import fnmatch
+      import json
+      import os
+      import os.path
+      try: from urllib import request as urllib2
+      except ImportError: import urllib2
+      import tempfile
+
+      suffixes = {
+        ('Linux', 'X64'): 'linux-x86_64',
+        ('macOS', 'X64'): 'darwin-x86_64',
+        ('Windows', 'X64'): 'win64.exe',
+      }
+      os_ = os.environ['RUNNER_OS']
+      arch = os.environ['RUNNER_ARCH']
+      try:
+        suffix = suffixes[os_, arch]
+      except KeyError:
+        print(
+          "::error title=Unsupported OS and architecture::submark doesn't",
+          'support {0}/{1}.'.format(os_, arch)
+        )
+        raise SystemExit(1)
+      filename = 'submark-' + suffix
+
+      # TODO: paging
+      req = urllib2.Request(
+        'https://api.github.com/repos/dahlia/submark/releases?per_page=100',
+        headers={'Authorization': 'Bearer ' + os.environ["GH_TOKEN"]}
+      )
+      res = urllib2.urlopen(req)
+      tags = json.load(res)
+      tags.sort(
+        key=lambda tag: tuple(map(int, tag['tag_name'].split('.'))),
+        reverse=True
+      )
+      res.close()
+      version_pattern = os.environ['SUBMARK_VERSION'].strip()
+      for tag in tags:
+        if not fnmatch.fnmatch(tag['tag_name'], version_pattern):
+          continue
+        for asset in tag['assets']:
+          if asset['name'] == filename:
+            print('::set-output name=submark-version::' + tag["tag_name"])
+            print(
+              '::set-output name=download-url::' +
+              asset["browser_download_url"]
+            )
+            break
+        else:
+          continue
+        break
+      else:
+        print(
+          '::error title=Unsupported platform::submark', version_pattern,
+          'does not support', os_, '&', arch + '.'
+        )
+
+      dir_path = tempfile.mkdtemp("submark")
+      bin_name = "submark.exe" if os_ == "Windows" else "submark"
+      submark_path = os.path.join(dir_path, bin_name)
+      print('::set-output name=dir-path::' + dir_path)
+      print('::set-output name=submark-path::' + submark_path)
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SUBMARK_VERSION: ${{ inputs.submark-version }}
+  # Linux & macOS
+  - if: runner.os != 'Windows'
+    shell: bash
+    run: |
+      set -e
+      wget "$DOWNLOAD_URL"
+      mv "$(basename "$DOWNLOAD_URL")" submark
+      chmod +x submark
+      if [[ "$ADD_TO_PATH" = "true" ]]; then
+        pwd >> "$GITHUB_PATH"
+      fi
+    env:
+      DOWNLOAD_URL: ${{ steps.prepare.outputs.download-url }}
+      DIR_PATH: ${{ steps.prepare.outputs.dir-path }}
+      ADD_TO_PATH: ${{ inputs.add-to-path }}
+    working-directory: ${{ steps.prepare.outputs.dir-path }}
+  # Windows
+  - if: runner.os == 'Windows'
+    shell: pwsh
+    run: |
+      Invoke-WebRequest `
+        $env:DOWNLOAD_URL `
+        -OutFile $env:DOWNLOAD_URL.Split("/")[-1]
+      Rename-Item $env:DOWNLOAD_URL.Split("/")[-1] "submark.exe"
+      if (ConvertFrom-Json $env:ADD_TO_PATH) {
+        Add-Content `
+          -Path $env:GITHUB_PATH `
+          -Value "$(Get-Location)"
+      }
+    env:
+      DOWNLOAD_URL: ${{ steps.prepare.outputs.download-url }}
+      ADD_TO_PATH: ${{ inputs.add-to-path }}
+    working-directory: ${{ steps.prepare.outputs.dir-path }}
