@@ -53,3 +53,66 @@ jobs:
         --h2 "software license"
         -i README.md
 
+  test-submark:
+    strategy:
+      matrix:
+        os:
+        - ubuntu-18.04
+        - ubuntu-20.04
+        - macos-10.15
+        - macos-11
+        - windows-2016
+        - windows-2019
+        - windows-2022
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+    - uses: actions/checkout@v2
+    # Test 1
+    - id: submark1
+      uses: ./
+      with:
+        input-text: |
+          # Foo
+          h1-foo
+          ## Bar
+          h2-bar
+          ## Baz
+          h2-bar
+          ### Bar
+          h3-bar
+        heading-level: 2
+        heading-title-text: bar
+        ignore-case: true
+        omit-heading: true
+    - run: |
+        import os.path
+        output_file = os.environ['OUTPUT_FILE']
+        output_text = os.environ['OUTPUT_TEXT']
+        assert os.path.isfile(output_file), 'no such file: ' + output_file
+        assert open(output_file).read().strip() == output_text.strip()
+        assert output_text.strip() == 'h2-bar'
+      shell: python
+      env:
+        OUTPUT_FILE: ${{ steps.submark1.outputs.output-file }}
+        OUTPUT_TEXT: ${{ steps.submark1.outputs.output-text }}
+    # Test 2
+    - id: submark2
+      uses: ./
+      with:
+        input-file: CHANGELOG.md
+        heading-level: 2
+        heading-title-regex: '[Vv]er(sion)?[[:space:]]+0[.]1[.]0'
+        omit-heading: true
+    - run: |
+        import os.path
+        output_file = os.environ['OUTPUT_FILE']
+        output_text = os.environ['OUTPUT_TEXT']
+        assert os.path.isfile(output_file), 'no such file: ' + output_file
+        assert open(output_file).read().strip() == output_text.strip()
+        assert output_text.strip() == \
+          'Initial release.  Released on September 24, 2017.'
+      shell: python
+      env:
+        OUTPUT_FILE: ${{ steps.submark2.outputs.output-file }}
+        OUTPUT_TEXT: ${{ steps.submark2.outputs.output-text }}

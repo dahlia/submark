@@ -1,0 +1,173 @@
+name: submark
+description:  Extract a part from CommonMark/Markdown docs
+author: Hong Minhee
+branding:
+  icon: file-text
+  color: orange
+
+inputs:
+  input-text:
+    description: >-
+      The input CommonMark/Markdown text.  Mutually exlclusive with
+      the input-file parameter.
+  input-file:
+    description: >-
+      The input CommonMark/Markdown file path.  Mutually exlclusive with
+      the input-text parameter.
+  heading-level:
+    description: The heading level of the section to extract.
+    required: true
+  heading-title-text:
+    description: >-
+      Extract the section with the exact this heading-title-text (and
+      the heading-level).  Note that it tries to match to the heading title with
+      no markup, which means heading-title-text: "foo bar" matches to both
+      "# foo bar" and "# _foo_ **bar**".  Mutually exclusive with
+      the heading-title-regex parameter.
+  heading-title-regex:
+    description: >-
+      Similar to the heading-title-text parameter except that it takes
+      a regular expression.  Note that it tries to match to the heading title
+      with no markup, which means heading-title-regex: "fo+ ba[rz]" matches to
+      both "# foo bar" and "# _foooo_ **baz**".  Mutually exclusive with
+      the heading-title-text parameter.
+  ignore-case:
+    description: Ignore case distinctions.
+    default: false
+  omit-heading:
+    description: Omit a leading heading.
+    default: false
+  columns:
+    description: >-
+      Limit the maximum characters per line of the output.  No limit by default.
+
+outputs:
+  output-text:
+    description: The text of the extracted part.
+    value: ${{ steps.invoke.outputs.output-text }}
+  output-file:
+    description: >-
+      The path to the temporary file which contains the only extracted part.
+    value: ${{ steps.invoke.outputs.output-file }}
+
+runs:
+  using: composite
+  steps:
+  - id: setup
+    uses: ./setup/
+    with:
+      submark-version: 0.3.*
+      add-to-path: false
+  - id: invoke
+    shell: python
+    run: |
+      from __future__ import print_function
+      import os
+      import os.path
+      import subprocess
+      import tempfile
+
+      input_text = os.environ['I_INPUT_TEXT']
+      input_file = os.environ['I_INPUT_FILE']
+      heading_level = os.environ['I_HEADING_LEVEL'].strip()
+      heading_title_text = os.environ['I_HEADING_TITLE_TEXT']
+      heading_title_regex = os.environ['I_HEADING_TITLE_REGEX']
+      ignore_case = os.environ['I_IGNORE_CASE'].strip().lower() == 'true'
+      omit_heading = os.environ['I_OMIT_HEADING'].strip().lower() == 'true'
+      columns = os.environ['I_COLUMNS'].strip()
+
+      error = False
+      if input_text and input_file:
+        print('::error title=Invalid parameters::Parameters input-text and',
+              'input-file are mutually exclusive.')
+        error = True
+      elif input_file and not os.path.isfile(input_file):
+        print('::error title=Invalid parameters::Parameter input-file refers',
+              'to non-existent file or a non-file (e.g., directory).')
+        error = True
+      try: heading_level = int(heading_level)
+      except ValueError:
+        print('::error title=Invalid parameters::Parameter heading-level must',
+              'be 1 to 6.')
+        error = True
+      if heading_title_text and heading_title_regex:
+        print('::error title=Invalid parameters::Parameters heading-title-text',
+              'and heading-title-regex are mutually exclusive.')
+        error = True
+      if columns:
+        coumns_error = False
+        try: columns = int(columns)
+        except ValueError:
+          columns_error = True
+        else:
+          columns_error = columns < 1
+        if columns_error:
+          print('::error title=Invalid parameters::Parameter columns must',
+                'be an integer greater than zero.')
+          error = True
+      else:
+        columns = None
+      if error:
+        raise SystemExit(1)
+
+      fd, out_file = tempfile.mkstemp(suffix='-out.md')
+      os.close(fd)
+      args = [
+        os.environ['SUBMARK_PATH'],
+        '--out-file',
+        out_file
+      ]
+
+      if heading_title_regex:
+        args.extend(['--h{0}-regex'.format(heading_level), heading_title_regex])
+      else:
+        args.extend(['--h{0}'.format(heading_level), heading_title_text])
+
+      if ignore_case:
+        args.append('--ignore-case')
+
+      if omit_heading:
+        args.append('--omit-heading')
+
+      if columns:
+        args.extend(['--columns', str(columns)])
+
+      if input_file:
+        args.append(input_file)
+      else:
+        with tempfile.NamedTemporaryFile(suffix='-in.md', delete=False) as f:
+          if isinstance(input_text, bytes):
+            f.write(input_text)
+          else:
+            f.write(input_text.encode('utf-8'))
+          args.append(f.name)
+
+      def escape_output(v):
+        return v.replace('%', '%25').replace('\n', '%0A').replace('\r', '%0D')
+
+      print('::debug::Subprocess call arguments:', repr(args))
+      with tempfile.TemporaryFile() as stderr:
+        exit_code = subprocess.call(args, stderr=stderr)
+        stderr.seek(0)
+        errmsg = stderr.read()
+      if exit_code == 0:
+        print('::set-output name=output-file::' + out_file)
+        with open(out_file) as f:
+          out_text = f.read()
+          print('::set-output name=output-text::' + escape_output(out_text))
+      else:
+        if not isinstance(errmsg, str):
+          errmsg = errmsg.decode('utf-8')
+        print('::error title=submark error::' + escape_output(errmsg))
+
+      raise SystemExit(exit_code)
+    env:
+      SUBMARK_PATH: ${{ steps.setup.outputs.submark-path }}
+      I_INPUT_TEXT: ${{ inputs.input-text }}
+      I_INPUT_FILE: ${{ inputs.input-file }}
+      I_HEADING_LEVEL: ${{ inputs.heading-level }}
+      I_HEADING_TITLE_TEXT: ${{ inputs.heading-title-text }}
+      I_HEADING_TITLE_REGEX: ${{ inputs.heading-title-regex }}
+      I_IGNORE_CASE: ${{ inputs.ignore-case }}
+      I_OMIT_HEADING: ${{ inputs.omit-heading }}
+      I_COLUMNS: ${{ inputs.columns }}

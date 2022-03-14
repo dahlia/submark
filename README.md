@@ -4,11 +4,11 @@
 [![GitHub Actions][gh-actions-badge]][gh-actions]
 [![Hackage][hackage-badge]][hackage]
 
-`submark` is a CLI program to extract some particular section from
-a given CommonMark/Markdown document.  I use it for myself to extract
-the latest version section from the *CHANGELOG.md* file, and then reuse the text
-for the corresponding release note on GitHub releases, during automated release
-process which is run on CI.
+`submark` is a CLI program (and GitHub action) to extract some particular
+section from a given CommonMark/Markdown document.  I use it for myself to
+extract the latest version section from the *CHANGELOG.md* file, and then reuse
+the text for the corresponding release note on GitHub releases, during automated
+release process which is run on CI/CD.
 
 [gh-actions-badge]: https://github.com/dahlia/submark/actions/workflows/build.yaml/badge.svg
 [gh-actions]: https://github.com/dahlia/submark/actions/workflows/build.yaml
@@ -16,10 +16,64 @@ process which is run on CI.
 [hackage]: https://hackage.haskell.org/package/submark
 
 
+GitHub action: `dahlia/submark`
+-------------------------------
+
+Although it's a standalone CLI program, you can use it through a handy GitHub
+action `dahlia/submark`:
+
+~~~ yaml
+- id: extract-changelog
+  uses: dahlia/submark@main
+  with:
+    input-file: CHANGELOG.md
+    heading-level: 2
+    heading-title-text: version ${{ github.ref_name }}
+    ignore-case: true
+    omit-heading: true
+
+# The output-file refers to the path of the temporary file which contains
+# the only extracted part:
+- run: cat ${{ steps.extract-changelog.output.output-file }}
+
+# The output-text contains the text of the extracted part.
+- run: echo $CHANGELOG
+  env:
+    CHANGELOG: ${{ steps.extract-changelog.output.output-text }}
+~~~
+
+### Input parameters
+
+ -  `input-text`:  The input CommonMark/Markdown text.  Mutually exlclusive with
+    the `input-file` parameter.
+ -  `input-file`:  The input CommonMark/Markdown file path.  Mutually exlclusive
+    with the `input-text` parameter.
+ -  `heading-level`:  The heading level of the section to extract.
+ -  `heading-title-text`:  Extract the section with the exact this
+    `heading-title-text` (and the `heading-level`).  Note that it tries to match
+    to the heading title with no markup, which means `heading-title-text:
+    "foo bar"` matches to both `# foo bar` and `# _foo_ **bar**`.  Mutually
+    exclusive with the `heading-title-regex` parameter.
+ -  `heading-title-regex`:  Similar to the `heading-title-text` parameter except
+    that it takes a regular expression.  Note that it tries to match to
+    the heading title with no markup, which means `heading-title-regex:
+    "fo+ ba[rz]"` matches to both `# foo bar` and `# _foooo_ **baz**`.
+    Mutually exclusive with the `heading-title-text` parameter.
+ -  `ignore-case`:  Ignore case distinctions.  (Default: `false`.)
+ -  `omit-heading`:  Omit a leading heading.  (Default: `false`.)
+ -  `columns`:  Limit the maximum characters per line of the output.
+    No limit by default.
+
+### Output parameters
+
+ -  `output-text`:  The text of the extracted part.
+ -  `output-file`:  The path to the temporary file which contains the only
+    extracted part.
+
 Download & installation
 -----------------------
 
-First of all, if you need to use `submark` on GitHub Actions,
+First of all, if you need to manually invoke `submark` on GitHub Actions,
 [`dahlia/submark/setup`](./setup/) action is the easiest way to install it.
 
 On the other CI/CD products, use the officially distributed executables.

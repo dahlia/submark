@@ -30,7 +30,8 @@ use the `submark-version` output:
   with:
     submark-version: *
 - run: |
-    echo "Installed submark version: ${{ steps.setup-submark.submark-version }}"
+    echo "Installed submark version:
+    ${{ steps.setup-submark.outputs.submark-version }}"
 ~~~
 
 To prevent the installed `submark` from being added to the `PATH`, turn off
@@ -43,7 +44,7 @@ the `submark-path` output instead:
   with:
     add-to-path: false
 - run: |
-    ${{ steps.setup-submark.submark-path }} \
+    ${{ steps.setup-submark.outputs.submark-path }} \
       --h1 "Version $GITHUB_REF_NAME"
       CHANGES.md
 ~~~
