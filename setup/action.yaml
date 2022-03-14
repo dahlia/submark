@@ -7,7 +7,7 @@ branding:
 inputs:
   submark-version:
     description: Version of a submark binary to install.  Note that asterisks can be used to choose the latest version, e.g., 1.2.*, 1.*, *.
-    default: ${{ github.action_ref }}
+    default: "*"
   add-to-path:
     description: Whether to add the installed submark to the PATH.  Turned on by default.
     default: true

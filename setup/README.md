@@ -7,9 +7,8 @@ This action installs [`submark`] during GitHub Actions workflow:
 - uses: dahlia/submark/setup@main
 ~~~
 
-It installs the same version of `submark` to the action (the tag after `@`
-refers the version) by default.  To explicitly specify the version to install,
-use the `submark-version` option:
+It installs the latest version of `submark`  by default.  To explicitly specify
+the version to install, use the `submark-version` option:
 
 ~~~ yaml
 - uses: dahlia/submark/setup@main
