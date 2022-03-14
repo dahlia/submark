@@ -19,6 +19,10 @@ process which is run on CI.
 Download & installation
 -----------------------
 
+First of all, if you need to use `submark` on GitHub Actions,
+[`dahlia/submark/setup`](./setup/) action is the easiest way to install it.
+
+On the other CI/CD products, use the officially distributed executables.
 Prebuilt binaries for the following platforms and architectures are available on
 [GitHub releases]:
 

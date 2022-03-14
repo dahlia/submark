@@ -4,7 +4,7 @@
 This action installs [`submark`] during GitHub Actions workflow:
 
 ~~~ yaml
-- uses: dahlia/submark/setup@0.3.0
+- uses: dahlia/submark/setup@main
 ~~~
 
 It installs the same version of `submark` to the action (the tag after `@`
@@ -12,7 +12,7 @@ refers the version) by default.  To explicitly specify the version to install,
 use the `submark-version` option:
 
 ~~~ yaml
-- uses: dahlia/submark/setup@0.3.0
+- uses: dahlia/submark/setup@main
   with:
     submark-version: 0.3.*
 ~~~
@@ -27,7 +27,7 @@ use the `submark-version` output:
 
 ~~~ yaml
 - id: setup-submark
-  uses: dahlia/submark/setup@0.3.0
+  uses: dahlia/submark/setup@main
   with:
     submark-version: *
 - run: |
@@ -39,7 +39,7 @@ To add the installed `submark` to the `PATH`, turn off the `add-to-path` option
 
 ~~~ yaml
 - id: setup-submark
-  uses: dahlia/submark/setup@0.3.0
+  uses: dahlia/submark/setup@main
   with:
     add-to-path: false
 - run: |
