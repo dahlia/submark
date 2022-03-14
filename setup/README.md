@@ -33,8 +33,9 @@ use the `submark-version` output:
     echo "Installed submark version: ${{ steps.setup-submark.submark-version }}"
 ~~~
 
-To add the installed `submark` to the `PATH`, turn off the `add-to-path` option
-(which is turned on by default) and use the `submark-path` output:
+To prevent the installed `submark` from being added to the `PATH`, turn off
+the `add-to-path` option (which is turned on by default) and use
+the `submark-path` output instead:
 
 ~~~ yaml
 - id: setup-submark
