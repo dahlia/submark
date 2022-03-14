@@ -3,13 +3,16 @@ description: Set up a specific version of submark and add it to the PATH.
 author: Hong Minhee
 branding:
   icon: file-text
-  color: orange
+  color: purple
 inputs:
   submark-version:
-    description: Version of a submark binary to install.  Note that asterisks can be used to choose the latest version, e.g., 1.2.*, 1.*, *.
+    description: >-
+      Version of a submark binary to install.  Note that asterisks can be used
+      to choose the latest version, e.g., 1.2.*, 1.*, *.
     default: "*"
   add-to-path:
-    description: Whether to add the installed submark to the PATH.  Turned on by default.
+    description: >-
+      Whether to add the installed submark to the PATH.  Turned on by default.
     default: true
 outputs:
   submark-version:

@@ -49,3 +49,20 @@ the `submark-path` output instead:
 ~~~
 
 [`submark`]: ..
+
+
+Input parameters
+----------------
+
+ -  `submark-version`:  Version of a `submark` binary to install.  Note that
+    asterisks can be used to choose the latest version, e.g., `1.2.*`, `1.*`,
+    `*`.  (Default: `*`.)
+ -  `add-to-path`:  Whether to add the installed `submark` to the `PATH`.
+    Turned on by default.  (Default: `true`.)
+
+
+Output parameters
+-----------------
+
+ -  `submark-version`:  Exact version number of the installed `submark`.
+ -  `submark-path`:  Absolute path of the installed `submark`.
