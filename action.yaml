@@ -1,5 +1,5 @@
-name: submark
-description:  Extract a part from CommonMark/Markdown docs
+name: Run submark
+description: Extract a part from CommonMark/Markdown docs
 author: Hong Minhee
 branding:
   icon: file-text
