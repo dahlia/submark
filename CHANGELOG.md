@@ -4,7 +4,7 @@
 Version 0.3.1
 -------------
 
-To be released.
+Released on Match 15, 2022.
 
  -  Added `dahlia/submark` action for GitHub Actions.  [[#6]]
  -  Added `dahlia/submark/setup` action for GitHub Actions.  [[#6]]
