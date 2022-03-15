@@ -1,6 +1,8 @@
 {-# LANGUAGE DisambiguateRecordFields #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 import Data.Maybe
+import Data.Version
 import System.IO
 
 import CMark
@@ -9,6 +11,12 @@ import Data.Text.IO as TIO
 import Options.Applicative
 
 import Text.CommonMark.Sub
+import qualified Paths_submark as Meta
+
+data Command
+    = Extract Extraction
+    | ShowVersion
+    deriving (Eq, Ord, Show)
 
 data Extraction = Extraction
     { outputFilePath :: FilePath
@@ -56,8 +64,8 @@ headingPatternParser =
         | l <- levels
         ]
 
-parser :: Parser Extraction
-parser = Extraction
+extractionParser :: Parser Extraction
+extractionParser = Extraction
     -- CHECK: Write docs in README.md for a new option.
     <$> strOption (  long "out-file"
                   <> short 'o'
@@ -89,7 +97,17 @@ parser = Extraction
                     <> help "CommonMark/Markdown text to extract from."
                     )
 
-parserInfo :: ParserInfo Extraction
+showVersionParser :: Parser Command
+showVersionParser = flag' ShowVersion
+    ( long "version"
+    <> short 'v'
+    <> help "Show version."
+    )
+
+parser :: Parser Command
+parser = (Extract <$> extractionParser) <|> showVersionParser
+
+parserInfo :: ParserInfo Command
 parserInfo = info parser $
     fullDesc <> progDesc "Extract a part from CommonMark/Markdown docs."
 
@@ -127,4 +145,6 @@ extract e@Extraction { headingPattern
     withOutputFile e (`TIO.hPutStrLn` result)
 
 main :: IO ()
-main = execParser parserInfo >>= extract
+main = execParser parserInfo >>= \ case
+    Extract e -> extract e
+    ShowVersion -> Prelude.putStrLn $ showVersion Meta.version

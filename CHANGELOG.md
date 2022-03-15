@@ -6,6 +6,8 @@ Version 0.4.0
 
 To be released.
 
+ -  Added `-v`/`--version` option.
+
 
 Version 0.3.1
 -------------
