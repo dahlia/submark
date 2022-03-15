@@ -3,6 +3,8 @@
 
 [![GitHub Actions][gh-actions-badge]][gh-actions]
 [![Hackage][hackage-badge]][hackage]
+[![GitHub releases][gh-downloads-badge]][GitHub releases]
+[![Container images][gh-containers-badge]][gh-containers]
 
 `submark` is a CLI program (and GitHub action) to extract some particular
 section from a given CommonMark/Markdown document.  I use it for myself to
@@ -14,6 +16,9 @@ release process which is run on CI/CD.
 [gh-actions]: https://github.com/dahlia/submark/actions/workflows/build.yaml
 [hackage-badge]: https://img.shields.io/hackage/v/submark.svg
 [hackage]: https://hackage.haskell.org/package/submark
+[gh-downloads-badge]: https://img.shields.io/github/downloads/dahlia/submark/total
+[gh-containers-badge]: https://img.shields.io/github/v/tag/dahlia/submark?color=blue&label=container&logo=docker&sort=semver
+[gh-containers]: https://github.com/dahlia/submark/pkgs/container/submark
 
 
 GitHub action: `dahlia/submark`
@@ -24,7 +29,7 @@ action `dahlia/submark`:
 
 ~~~ yaml
 - id: extract-changelog
-  uses: dahlia/submark@main
+  uses: dahlia/submark@0.3.1
   with:
     input-file: CHANGELOG.md
     heading-level: 2
@@ -69,6 +74,7 @@ action `dahlia/submark`:
  -  `output-text`:  The text of the extracted part.
  -  `output-file`:  The path to the temporary file which contains the only
     extracted part.
+
 
 Download & installation
 -----------------------

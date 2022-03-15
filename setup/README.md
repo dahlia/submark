@@ -4,14 +4,14 @@
 This action installs [`submark`] during GitHub Actions workflow:
 
 ~~~ yaml
-- uses: dahlia/submark/setup@main
+- uses: dahlia/submark/setup@0.3.1
 ~~~
 
 It installs the latest version of `submark`  by default.  To explicitly specify
-the version to install, use the `submark-version` option:
+the version to install, use the `submark-version` option:[^1]
 
 ~~~ yaml
-- uses: dahlia/submark/setup@main
+- uses: dahlia/submark/setup@0.3.1
   with:
     submark-version: 0.3.*
 ~~~
@@ -30,8 +30,8 @@ use the `submark-version` output:
   with:
     submark-version: *
 - run: |
-    echo "Installed submark version:
-    ${{ steps.setup-submark.outputs.submark-version }}"
+    echo "Installed submark version:" \
+      "${{ steps.setup-submark.outputs.submark-version }}"
 ~~~
 
 To prevent the installed `submark` from being added to the `PATH`, turn off
@@ -43,11 +43,14 @@ the `submark-path` output instead:
   uses: dahlia/submark/setup@main
   with:
     add-to-path: false
-- run: |
+- run: >-
     ${{ steps.setup-submark.outputs.submark-path }} \
-      --h1 "Version $GITHUB_REF_NAME"
-      CHANGES.md
+    --h1 "Version $GITHUB_REF_NAME"
+    CHANGES.md
 ~~~
+
+[^1]: Note that the action version and the `submark` versions are distinct.
+      However, it's recommended to match major and minor versions for both.
 
 [`submark`]: ..
 

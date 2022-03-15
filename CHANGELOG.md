@@ -1,6 +1,17 @@
 `submark` changelog
 ===================
 
+Version 0.3.1
+-------------
+
+To be released.
+
+ -  Added `dahlia/submark` action for GitHub Actions.  [[#6]]
+ -  Added `dahlia/submark/setup` action for GitHub Actions.  [[#6]]
+
+[#6]: https://github.com/dahlia/submark/issues/6
+
+
 Version 0.3.0
 -------------
 
