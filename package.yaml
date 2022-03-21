@@ -4,7 +4,7 @@ synopsis: Extract a part from CommonMark/Markdown docs
 category: Text
 author: Hong Minhee
 maintainer: hong.minhee@gmail.com
-copyright: (c) 2017 Hong Minhee
+copyright: "\xa9 2017\u20132022 Hong Minhee"
 license: GPL-3
 github: dahlia/submark
 stability: alpha
