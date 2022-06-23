@@ -54,7 +54,8 @@ runs:
   using: composite
   steps:
   - id: setup
-    uses: ./setup/
+    # FIXME: Isn't there better way?  https://github.com/dahlia/submark/issues/7
+    uses: dahlia/submark/setup@main
     with:
       submark-version: 0.3.*
       add-to-path: false
