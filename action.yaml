@@ -152,10 +152,22 @@ runs:
         stderr.seek(0)
         errmsg = stderr.read()
       if exit_code == 0:
-        print('::set-output name=output-file::' + out_file)
-        with open(out_file) as f:
-          out_text = f.read()
-          print('::set-output name=output-text::' + escape_output(out_text))
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+          out.write('output-file=')
+          out.write(out_file)
+          out.write('\n')
+          with open(out_file) as f:
+            out_text = f.read()
+            delim = 'TXT'
+            while delim in out_text:
+              delim += 'X'
+            out.write('output-text<<')
+            out.write(delim)
+            out.write('\n')
+            out.write(out_text)
+            out.write('\n')
+            out.write(delim)
+            out.write('\n')
       else:
         if not isinstance(errmsg, str):
           errmsg = errmsg.decode('utf-8')

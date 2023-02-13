@@ -36,6 +36,25 @@ runs:
       except ImportError: import urllib2
       import tempfile
 
+      def set_output(name, value):
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as out:
+          if '\n' not in value:
+            out.write(name)
+            out.write('=')
+            out.write(value)
+            out.write('\n')
+          else:
+            delim = 'EOF'
+            while delim in value:
+              delim += 'X'
+            out.write(name)
+            out.write(delim)
+            out.write('\n')
+            out.write(value)
+            out.write('\n')
+            out.write(delim)
+            out.write('\n')
+
       suffixes = {
         ('Linux', 'X64'): 'linux-x86_64',
         ('macOS', 'X64'): 'darwin-x86_64',
@@ -71,11 +90,8 @@ runs:
           continue
         for asset in tag['assets']:
           if asset['name'] == filename:
-            print('::set-output name=submark-version::' + tag["tag_name"])
-            print(
-              '::set-output name=download-url::' +
-              asset["browser_download_url"]
-            )
+            set_output('submark-version', tag['tag_name'])
+            set_output('download-url', asset['browser_download_url'])
             break
         else:
           continue
@@ -86,11 +102,13 @@ runs:
           'does not support', os_, '&', arch + '.'
         )
 
-      dir_path = tempfile.mkdtemp("submark")
+      dir_path = tempfile.mkdtemp("submark", os.environ['RUNNER_TEMP'] + os.sep)
+      if not os.path.isdir(dir_path):
+        os.mkdir(dir_path)
       bin_name = "submark.exe" if os_ == "Windows" else "submark"
       submark_path = os.path.join(dir_path, bin_name)
-      print('::set-output name=dir-path::' + dir_path)
-      print('::set-output name=submark-path::' + submark_path)
+      set_output('dir-path', dir_path)
+      set_output('submark-path', submark_path)
     env:
       GH_TOKEN: ${{ github.token }}
       SUBMARK_VERSION: ${{ inputs.submark-version }}
