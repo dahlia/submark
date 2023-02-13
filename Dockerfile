@@ -1,18 +1,17 @@
 # To correctly make a statically-linked binary, we use Alpine Linux.
 # The distro entirely uses musl instead of glibc which is unfriendly to be
 # statically linked.
-FROM alpine:3.15 AS build
+FROM alpine:3.17 AS build
 
 RUN apk add --no-cache \
-  bash=5.1.16-r0 \
-  build-base=0.5-r2 \
-  curl=7.80.0-r0 \
-  ghc=9.0.1-r1 \
-  libffi-dev=3.4.2-r1 \
-  ncurses-dev=6.3_p20211120-r0 \
-  upx=3.96-r1 \
-  yq=4.14.1-r0 \
-  zlib-dev=1.2.11-r3
+  bash=5.2.15-r0 \
+  build-base=0.5-r3 \
+  curl=7.87.0-r1 \
+  ghc=9.0.2-r1 \
+  libffi-dev=3.4.4-r0 \
+  ncurses-dev=6.3_p20221119-r0 \
+  upx=4.0.2-r0 \
+  zlib-dev=1.2.13-r0
 RUN curl -sSL https://get.haskellstack.org/ | bash
 
 RUN stack config set system-ghc --global true
@@ -20,7 +19,6 @@ RUN stack config set system-ghc --global true
 # Add just the package.yaml file to capture dependencies
 COPY package.yaml /src/submark/package.yaml
 COPY stack.yaml /src/submark/stack.yaml
-RUN yq e -i '.compiler = "ghc-9.0.1"' /src/submark/stack.yaml
 
 WORKDIR /src/submark
 
@@ -39,7 +37,7 @@ RUN stack build --flag submark:static --copy-bins
 RUN upx -9 "$(stack path --local-bin)/submark"
 RUN stack exec -- submark || true
 
-FROM alpine:3.15
+FROM alpine:3.17
 COPY --from=build /root/.local/bin/submark /usr/bin/submark
 CMD ["/usr/bin/submark"]
 
