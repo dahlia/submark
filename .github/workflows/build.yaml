@@ -10,7 +10,7 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu-20.04
+        - ubuntu-22.04
         - macos-11
         - windows-2022
       fail-fast: false
@@ -44,21 +44,24 @@ jobs:
       run: stack build --test
     - name: Test
       run: stack test
-    - name: Build for release (Linux & Windows)
-      if: runner.os == 'Linux' || runner.os == 'Windows'
+    - name: Build for release (Windows)
+      if: runner.os == 'Windows'
       run: stack build --flag submark:static --copy-bins
     - name: Build for release (macOS)
       if: runner.os == 'macOS'
       run: stack build --copy-bins
     - id: bin-path
+      if: runner.os != 'Linux'
+      shell: bash
       run: |
-        echo "::set-output name=bin-path::$(stack path --local-bin)/submark"
+        echo "bin-path=$(stack path --local-bin)/submark" >> "$GITHUB_OUTPUT"
     - uses: crazy-max/ghaction-upx@v1
-      if: runner.os == 'Linux' || runner.os == 'Windows'
+      if: runner.os == 'Windows'
       with:
-        files: ${{ steps.bin-path.outputs.bin-path }}*
+        files: ${{ steps.bin-path.outputs.bin-path }}.exe
         args: "-9"
-    - uses: actions/upload-artifact@v3
+    - if: runner.os != 'Linux'
+      uses: actions/upload-artifact@v3
       with:
         name: ${{ runner.os }}-executable
         path: ${{ steps.bin-path.outputs.bin-path }}*
