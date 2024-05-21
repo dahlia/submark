@@ -10,14 +10,14 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu-22.04
-        - macos-11
+        - ubuntu-24.04
+        - macos-13  # Intel
         - windows-2022
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v2
-    - uses: haskell/actions/setup@v1
+    - uses: haskell-actions/setup@v2
       with:
         enable-stack: true
     - name: Cache Stack files (non-Windows)
@@ -75,7 +75,7 @@ jobs:
     if: github.event_name == 'pull_request'
     env:
       CHECKMATE_DOWNLOAD_URL: https://github.com/dahlia/checkmate/releases/download/0.4.0/checkmate-linux-x86_64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v2
     - run: |
@@ -93,7 +93,7 @@ jobs:
     env:
       IMG_REPO: ghcr.io/${{ github.repository }}
       IMG_TAG: git-${{ github.sha }}
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v2
     - uses: satackey/action-docker-layer-caching@v0.0.11
@@ -131,10 +131,10 @@ jobs:
 
   release:
     needs: [test, docker-image]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v2
-    - uses: haskell/actions/setup@v1
+    - uses: haskell-actions/setup@v2
       with:
         enable-stack: true
     - run: |

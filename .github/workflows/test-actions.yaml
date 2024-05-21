@@ -10,11 +10,12 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu-18.04
         - ubuntu-20.04
         - ubuntu-22.04
-        - macos-10.15
-        - macos-11
+        - ubuntu-24.04
+        - macos-12  # Intel
+        - macos-13  # Intel
+        - macos-14-large  # Intel
         - windows-2019
         - windows-2022
       fail-fast: false
@@ -57,11 +58,12 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu-18.04
         - ubuntu-20.04
         - ubuntu-22.04
-        - macos-10.15
-        - macos-11
+        - ubuntu-24.04
+        - macos-12  # Intel
+        - macos-13  # Intel
+        - macos-14-large  # Intel
         - windows-2019
         - windows-2022
       fail-fast: false
