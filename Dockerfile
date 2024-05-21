@@ -6,10 +6,10 @@ FROM alpine:3.17 AS build
 RUN apk add --no-cache \
   bash=5.2.15-r0 \
   build-base=0.5-r3 \
-  curl=7.88.1-r1 \
+  curl=8.5.0-r0 \
   ghc=9.0.2-r1 \
   libffi-dev=3.4.4-r0 \
-  ncurses-dev=6.3_p20221119-r0 \
+  ncurses-dev=6.3_p20221119-r1 \
   upx=4.0.2-r0 \
   zlib-dev=1.2.13-r0
 RUN curl -sSL https://get.haskellstack.org/ | bash
