@@ -1,17 +1,17 @@
 # To correctly make a statically-linked binary, we use Alpine Linux.
 # The distro entirely uses musl instead of glibc which is unfriendly to be
 # statically linked.
-FROM alpine:3.17 AS build
+FROM alpine:3.20 AS build
 
 RUN apk add --no-cache \
-  bash=5.2.15-r0 \
+  bash=5.2.26-r0 \
   build-base=0.5-r3 \
-  curl=8.9.0-r0 \
-  ghc=9.0.2-r1 \
-  libffi-dev=3.4.4-r0 \
-  ncurses-dev=6.3_p20221119-r1 \
-  upx=4.0.2-r0 \
-  zlib-dev=1.2.13-r0
+  curl=8.9.1-r1 \
+  ghc=9.8.2-r1 \
+  libffi-dev=3.4.6-r0 \
+  ncurses-dev=6.4_p20240420-r0 \
+  upx=4.2.4-r0 \
+  zlib-dev=1.3.1-r1
 RUN curl -sSL https://get.haskellstack.org/ | bash
 
 RUN stack config set system-ghc --global true
@@ -37,7 +37,7 @@ RUN stack build --flag submark:static --copy-bins
 RUN upx -9 "$(stack path --local-bin)/submark"
 RUN stack exec -- submark || true
 
-FROM alpine:3.17
+FROM alpine:3.20
 COPY --from=build /root/.local/bin/submark /usr/bin/submark
 CMD ["/usr/bin/submark"]
 
