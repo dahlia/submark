@@ -4,7 +4,7 @@
 Version 0.4.0
 -------------
 
-To be released.
+Released on May 17, 2026.
 
  -  Added `-v`/`--version` option.
  -  Added prebuilt binaries for Linux aarch64 and macOS aarch64.
@@ -14,7 +14,7 @@ To be released.
 Version 0.3.1
 -------------
 
-Released on Match 15, 2022.
+Released on March 15, 2022.
 
  -  Added `dahlia/submark` action for GitHub Actions.  [[#6]]
  -  Added `dahlia/submark/setup` action for GitHub Actions.  [[#6]]
