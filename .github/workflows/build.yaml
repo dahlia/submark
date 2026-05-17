@@ -1,28 +1,30 @@
 name: build
 on:
-  push: []
+  push:
   schedule:
-  - cron: 59 14 * * *
-  pull_request: []
+  - cron: '59 14 * * *'
+  pull_request:
 
 jobs:
   test:
+    permissions:
+      contents: read
     strategy:
       matrix:
         os:
         - ubuntu-24.04
-        - macos-13  # Intel
-        - windows-2022
+        - macos-15-intel
+        - windows-2025
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     - uses: haskell-actions/setup@v2
       with:
         enable-stack: true
     - name: Cache Stack files (non-Windows)
       if: "runner.os != 'Windows'"
-      uses: actions/cache@v2
+      uses: actions/cache@v5
       with:
         path: |
           ~/.cabal/packages
@@ -31,7 +33,7 @@ jobs:
         key: stack-${{ runner.os }}-${{ runner.arch }}
     - name: Cache Stack files (Windows)
       if: "runner.os == 'Windows'"
-      uses: actions/cache@v2
+      uses: actions/cache@v5
       with:
         path: |
           %APPDATA%\cabal\packages
@@ -55,13 +57,13 @@ jobs:
       shell: bash
       run: |
         echo "bin-path=$(stack path --local-bin)/submark" >> "$GITHUB_OUTPUT"
-    - uses: crazy-max/ghaction-upx@v1
+    - uses: crazy-max/ghaction-upx@v4
       if: runner.os == 'Windows'
       with:
         files: ${{ steps.bin-path.outputs.bin-path }}.exe
         args: "-9"
     - if: runner.os != 'Linux'
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ${{ runner.os }}-executable
         path: ${{ steps.bin-path.outputs.bin-path }}*
@@ -73,11 +75,14 @@ jobs:
 
   check:
     if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: read
     env:
       CHECKMATE_DOWNLOAD_URL: https://github.com/dahlia/checkmate/releases/download/0.4.0/checkmate-linux-x86_64
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     - run: |
         set -evx
         mkdir -p ~/bin
@@ -90,28 +95,42 @@ jobs:
           --pr "$(jq --raw-output .pull_request.number "$GITHUB_EVENT_PATH")"
 
   docker-image:
+    permissions:
+      contents: read
+      packages: write
     env:
       IMG_REPO: ghcr.io/${{ github.repository }}
       IMG_TAG: git-${{ github.sha }}
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
-    - uses: satackey/action-docker-layer-caching@v0.0.11
-      continue-on-error: true
+    - uses: actions/checkout@v6
+    - uses: docker/setup-buildx-action@v4
+    - if: github.event_name != 'pull_request'
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     - run: |
         set -exv
+        labels=(
+          --label "org.opencontainers.image.url=https://github.com/$GITHUB_REPOSITORY"
+        )
         if [[ "$GITHUB_REF_TYPE" = "tag" ]]; then
-          tag_label="--label org.opencontainers.image.version=$GITHUB_REF_NAME"
+          labels+=(
+            --label "org.opencontainers.image.version=$GITHUB_REF_NAME"
+          )
         fi
-        docker build \
+        docker buildx build \
+          --load \
+          --cache-from type=gha \
+          --cache-to type=gha,mode=max \
           --tag "$IMG_REPO:$IMG_TAG" \
-          --label \
-            org.opencontainers.image.url=https://github.com/$GITHUB_REPOSITORY \
-          $tag_label \
+          "${labels[@]}" \
           .
-        docker login ghcr.io \
-          --username "$GITHUB_REPOSITORY_OWNER" \
-          --password-stdin <<< "${{ secrets.GITHUB_TOKEN }}"
+    - if: github.event_name != 'pull_request'
+      run: |
+        set -exv
         docker push "$IMG_REPO:$IMG_TAG"
     - if: github.ref_type == 'tag'
       run: |
@@ -123,7 +142,7 @@ jobs:
     - run: |
         docker run "$IMG_REPO:$IMG_TAG" cat /usr/bin/submark \
           > "$RUNNER_TEMP/submark"
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: ${{ runner.os }}-musl-executable
         path: ${{ runner.temp }}/submark
@@ -131,9 +150,12 @@ jobs:
 
   release:
     needs: [test, docker-image]
+    permissions:
+      actions: read
+      contents: write
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     - uses: haskell-actions/setup@v2
       with:
         enable-stack: true
@@ -147,15 +169,15 @@ jobs:
         mkdir -p "$RUNNER_TEMP/linux/"
         mkdir -p "$RUNNER_TEMP/macos/"
         mkdir -p "$RUNNER_TEMP/windows/"
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: Linux-musl-executable
         path: ${{ runner.temp }}/linux
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: macOS-executable
         path: ${{ runner.temp }}/macos
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v8
       with:
         name: Windows-executable
         path: ${{ runner.temp }}/windows
@@ -174,13 +196,13 @@ jobs:
           --omit-heading \
           --out-file "$RUNNER_TEMP/dist/RELEASE.md" \
           CHANGELOG.md
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: dist
         path: ${{ runner.temp }}/dist/
         if-no-files-found: error
     - if: github.ref_type == 'tag'
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v3
       with:
         token: ${{ secrets.GITHUB_TOKEN }}
         body_path: ${{ runner.temp }}/dist/RELEASE.md

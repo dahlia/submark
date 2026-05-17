@@ -6,7 +6,7 @@ import Data.Version
 import System.IO
 
 import CMark
-import Data.Text hiding (empty, foldl)
+import Data.Text (pack)
 import Data.Text.IO as TIO
 import Options.Applicative
 

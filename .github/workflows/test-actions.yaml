@@ -1,27 +1,28 @@
 name: test-actions
 on:
-  push: []
+  push:
   schedule:
-  - cron: 59 14 * * *
-  pull_request: []
+  - cron: '59 14 * * *'
+  pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   test-setup-submark:
     strategy:
       matrix:
         os:
-        - ubuntu-20.04
         - ubuntu-22.04
         - ubuntu-24.04
-        - macos-12  # Intel
-        - macos-13  # Intel
-        - macos-14-large  # Intel
-        - windows-2019
+        - macos-15-intel
+        - macos-26-intel
         - windows-2022
+        - windows-2025
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     # Test 1
     - id: setup1
       uses: ./setup
@@ -58,18 +59,16 @@ jobs:
     strategy:
       matrix:
         os:
-        - ubuntu-20.04
         - ubuntu-22.04
         - ubuntu-24.04
-        - macos-12  # Intel
-        - macos-13  # Intel
-        - macos-14-large  # Intel
-        - windows-2019
+        - macos-15-intel
+        - macos-26-intel
         - windows-2022
+        - windows-2025
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v6
     # Test 1
     - id: submark1
       uses: ./
