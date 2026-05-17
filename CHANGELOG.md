@@ -7,6 +7,8 @@ Version 0.4.0
 To be released.
 
  -  Added `-v`/`--version` option.
+ -  Added prebuilt binaries for Linux aarch64 and macOS aarch64.
+ -  Added linux/arm64 Docker images.
 
 
 Version 0.3.1

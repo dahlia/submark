@@ -11,10 +11,15 @@ jobs:
       contents: read
     strategy:
       matrix:
-        os:
-        - ubuntu-24.04
-        - macos-15-intel
-        - windows-2025
+        include:
+        - os: ubuntu-24.04
+        - os: ubuntu-24.04-arm
+        - os: macos-15-intel
+          artifact_name: macOS-x86_64-executable
+        - os: macos-15
+          artifact_name: macOS-aarch64-executable
+        - os: windows-2025
+          artifact_name: Windows-win64-executable
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
@@ -65,7 +70,7 @@ jobs:
     - if: runner.os != 'Linux'
       uses: actions/upload-artifact@v7
       with:
-        name: ${{ runner.os }}-executable
+        name: ${{ matrix.artifact_name }}
         path: ${{ steps.bin-path.outputs.bin-path }}*
         if-no-files-found: error
     - if: runner.os != 'Windows'
@@ -101,7 +106,19 @@ jobs:
     env:
       IMG_REPO: ghcr.io/${{ github.repository }}
       IMG_TAG: git-${{ github.sha }}
-    runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        include:
+        - os: ubuntu-24.04
+          platform: linux/amd64
+          image_arch: amd64
+          artifact_name: Linux-x86_64-musl-executable
+        - os: ubuntu-24.04-arm
+          platform: linux/arm64
+          image_arch: arm64
+          artifact_name: Linux-aarch64-musl-executable
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
     steps:
     - uses: actions/checkout@v6
     - uses: docker/setup-buildx-action@v4
@@ -123,33 +140,94 @@ jobs:
         fi
         docker buildx build \
           --load \
-          --cache-from type=gha \
-          --cache-to type=gha,mode=max \
-          --tag "$IMG_REPO:$IMG_TAG" \
+          --platform "$PLATFORM" \
+          --cache-from "type=gha,scope=submark-$IMAGE_ARCH" \
+          --cache-to "type=gha,mode=max,scope=submark-$IMAGE_ARCH" \
+          --tag "$IMG_REPO:$IMG_TAG-$IMAGE_ARCH" \
           "${labels[@]}" \
           .
+      env:
+        IMAGE_ARCH: ${{ matrix.image_arch }}
+        PLATFORM: ${{ matrix.platform }}
     - if: github.event_name != 'pull_request'
       run: |
         set -exv
-        docker push "$IMG_REPO:$IMG_TAG"
-    - if: github.ref_type == 'tag'
-      run: |
-        set -exv
-        docker tag "$IMG_REPO:$IMG_TAG" "$IMG_REPO:$GITHUB_REF_NAME"
-        docker push "$IMG_REPO:$GITHUB_REF_NAME"
-        docker tag "$IMG_REPO:$IMG_TAG" "$IMG_REPO:latest"
-        docker push "$IMG_REPO:latest"
+        docker push "$IMG_REPO:$IMG_TAG-$IMAGE_ARCH"
+      env:
+        IMAGE_ARCH: ${{ matrix.image_arch }}
     - run: |
-        docker run "$IMG_REPO:$IMG_TAG" cat /usr/bin/submark \
+        docker run "$IMG_REPO:$IMG_TAG-$IMAGE_ARCH" cat /usr/bin/submark \
           > "$RUNNER_TEMP/submark"
+      env:
+        IMAGE_ARCH: ${{ matrix.image_arch }}
     - uses: actions/upload-artifact@v7
       with:
-        name: ${{ runner.os }}-musl-executable
+        name: ${{ matrix.artifact_name }}
         path: ${{ runner.temp }}/submark
         if-no-files-found: error
 
+  docker-manifest:
+    needs: docker-image
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMG_REPO: ghcr.io/${{ github.repository }}
+      IMG_TAG: git-${{ github.sha }}
+    runs-on: ubuntu-24.04
+    steps:
+    - if: github.event_name == 'pull_request'
+      run: echo "Skipping Docker manifest publishing for pull request."
+    - if: github.event_name != 'pull_request'
+      uses: docker/setup-buildx-action@v4
+    - if: github.event_name != 'pull_request'
+      uses: docker/login-action@v4
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+    - if: github.event_name != 'pull_request'
+      run: |
+        set -exv
+        annotations=(
+          --annotation "index:org.opencontainers.image.title=submark"
+          --annotation "index:org.opencontainers.image.licenses=GPL-3"
+          --annotation "index:org.opencontainers.image.description=Extract a part from CommonMark/Markdown docs"
+          --annotation "index:org.opencontainers.image.url=https://github.com/$GITHUB_REPOSITORY"
+        )
+        if [[ "$GITHUB_REF_TYPE" = "tag" ]]; then
+          annotations+=(
+            --annotation "index:org.opencontainers.image.version=$GITHUB_REF_NAME"
+          )
+        fi
+        docker buildx imagetools create \
+          "${annotations[@]}" \
+          --tag "$IMG_REPO:$IMG_TAG" \
+          "$IMG_REPO:$IMG_TAG-amd64" \
+          "$IMG_REPO:$IMG_TAG-arm64"
+    - if: github.ref_type == 'tag'
+      run: |
+        set -exv
+        annotations=(
+          --annotation "index:org.opencontainers.image.title=submark"
+          --annotation "index:org.opencontainers.image.licenses=GPL-3"
+          --annotation "index:org.opencontainers.image.description=Extract a part from CommonMark/Markdown docs"
+          --annotation "index:org.opencontainers.image.url=https://github.com/$GITHUB_REPOSITORY"
+          --annotation "index:org.opencontainers.image.version=$GITHUB_REF_NAME"
+        )
+        docker buildx imagetools create \
+          "${annotations[@]}" \
+          --tag "$IMG_REPO:$GITHUB_REF_NAME" \
+          "$IMG_REPO:$IMG_TAG-amd64" \
+          "$IMG_REPO:$IMG_TAG-arm64"
+        docker buildx imagetools create \
+          "${annotations[@]}" \
+          --tag "$IMG_REPO:latest" \
+          "$IMG_REPO:$IMG_TAG-amd64" \
+          "$IMG_REPO:$IMG_TAG-arm64"
+
   release:
-    needs: [test, docker-image]
+    needs: [test, docker-image, docker-manifest]
     permissions:
       actions: read
       contents: write
@@ -164,28 +242,43 @@ jobs:
         mkdir -p "$RUNNER_TEMP/dist/"
         stack sdist
         cp "$(stack path --dist-dir)"/submark-*.tar.gz "$RUNNER_TEMP/dist/"
-    - run:
+    - run: |
         set -evx
-        mkdir -p "$RUNNER_TEMP/linux/"
-        mkdir -p "$RUNNER_TEMP/macos/"
+        mkdir -p "$RUNNER_TEMP/linux-x86_64/"
+        mkdir -p "$RUNNER_TEMP/linux-aarch64/"
+        mkdir -p "$RUNNER_TEMP/macos-x86_64/"
+        mkdir -p "$RUNNER_TEMP/macos-aarch64/"
         mkdir -p "$RUNNER_TEMP/windows/"
     - uses: actions/download-artifact@v8
       with:
-        name: Linux-musl-executable
-        path: ${{ runner.temp }}/linux
+        name: Linux-x86_64-musl-executable
+        path: ${{ runner.temp }}/linux-x86_64
     - uses: actions/download-artifact@v8
       with:
-        name: macOS-executable
-        path: ${{ runner.temp }}/macos
+        name: Linux-aarch64-musl-executable
+        path: ${{ runner.temp }}/linux-aarch64
     - uses: actions/download-artifact@v8
       with:
-        name: Windows-executable
+        name: macOS-x86_64-executable
+        path: ${{ runner.temp }}/macos-x86_64
+    - uses: actions/download-artifact@v8
+      with:
+        name: macOS-aarch64-executable
+        path: ${{ runner.temp }}/macos-aarch64
+    - uses: actions/download-artifact@v8
+      with:
+        name: Windows-win64-executable
         path: ${{ runner.temp }}/windows
     - run: |
         set -evx
-        mv "$RUNNER_TEMP/linux/submark" "$RUNNER_TEMP/dist/submark-linux-x86_64"
-        mv "$RUNNER_TEMP/macos/submark" \
+        mv "$RUNNER_TEMP/linux-x86_64/submark" \
+          "$RUNNER_TEMP/dist/submark-linux-x86_64"
+        mv "$RUNNER_TEMP/linux-aarch64/submark" \
+          "$RUNNER_TEMP/dist/submark-linux-aarch64"
+        mv "$RUNNER_TEMP/macos-x86_64/submark" \
           "$RUNNER_TEMP/dist/submark-darwin-x86_64"
+        mv "$RUNNER_TEMP/macos-aarch64/submark" \
+          "$RUNNER_TEMP/dist/submark-darwin-aarch64"
         mv "$RUNNER_TEMP/windows/submark.exe" \
           "$RUNNER_TEMP/dist/submark-win64.exe"
     - run: |
@@ -209,7 +302,9 @@ jobs:
         name: submark ${{ github.ref_name }}
         files: |
           ${{ runner.temp }}/dist/submark-linux-x86_64
+          ${{ runner.temp }}/dist/submark-linux-aarch64
           ${{ runner.temp }}/dist/submark-darwin-x86_64
+          ${{ runner.temp }}/dist/submark-darwin-aarch64
           ${{ runner.temp }}/dist/submark-win64.exe
           ${{ runner.temp }}/dist/submark-${{ github.ref_name }}.tar.gz
     - if: github.ref_type == 'tag'

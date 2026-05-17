@@ -57,7 +57,9 @@ runs:
 
       suffixes = {
         ('Linux', 'X64'): 'linux-x86_64',
+        ('Linux', 'ARM64'): 'linux-aarch64',
         ('macOS', 'X64'): 'darwin-x86_64',
+        ('macOS', 'ARM64'): 'darwin-aarch64',
         ('Windows', 'X64'): 'win64.exe',
       }
       os_ = os.environ['RUNNER_OS']

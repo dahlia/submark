@@ -86,8 +86,8 @@ On the other CI/CD products, use the officially distributed executables.
 Prebuilt binaries for the following platforms and architectures are available on
 [GitHub releases]:
 
- -  Linux (x86_64)
- -  macOS (x86_64)
+ -  Linux (x86_64, aarch64)
+ -  macOS (x86_64, aarch64)
  -  Windows (win64)
 
 For other platforms and architectures, you need to build it by yourself.
